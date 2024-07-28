@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "groupName": "docker updates"
+    },
+    {
+      "matchDatasources": ["helm"],
+      "groupName": "helm chart updates"
+    },
+    {
+      "matchFiles": ["**/ansible/inventory/*"],
+      "groupName": "ansible inventory updates"
+    }
+  ]
+}
+
