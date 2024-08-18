@@ -1,14 +1,14 @@
 terraform {
   required_version = "1.8.1"
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.116.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.53.0"
-    }
+    # azurerm = {
+    #   source  = "hashicorp/azurerm"
+    #   version = "~> 3.116.0"
+    # }
+    # azuread = {
+    #   source  = "hashicorp/azuread"
+    #   version = "~> 2.53.0"
+    # }
     bitwarden = {
       source  = "maxlaverse/bitwarden"
       version = "~> 0.8.0"
@@ -20,15 +20,17 @@ terraform {
   }
 }
 
-provider "azurerm" {
-  features {}
-}
+# provider "azurerm" {
+#   features {}
+# }
 
-provider "azuread" {
+# provider "azuread" {
 
-}
+# }
 
 provider "bitwarden" {
-  email    = var.bitwarden-email
-  password = var.bitwarden-password
+  email           = var.bitwarden-email
+  master_password = var.bitwarden-master-password
+  client_id       = var.bitwarden-client-id
+  client_secret   = var.bitwarden-client-secret
 }
