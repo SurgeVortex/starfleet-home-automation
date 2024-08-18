@@ -1,0 +1,10 @@
+repos:
+- repo: https://github.com/tofuutils/pre-commit-opentofu
+  rev: v1.0.2 # Get the latest from: https://github.com/tofuutils/pre-commit-opentofu/releases
+  hooks:
+    - id: tofu_fmt
+    - id: tofu_docs
+    - id: tofu_fmt
+    - id: tofu_tflint
+    - id: tofu_trivy
+    - id: tofu_validate
