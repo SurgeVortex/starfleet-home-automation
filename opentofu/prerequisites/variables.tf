@@ -20,6 +20,6 @@ variable "bitwarden-client-secret" {
 
 variable "bitwarden-folder" {
   description = "Name of the folder all automation secrets are kept in."
-  type = string
-  default = "starfleet-home-automation"
+  type        = string
+  default     = "starfleet-home-automation"
 }
