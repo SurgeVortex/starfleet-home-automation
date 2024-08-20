@@ -1,5 +1,10 @@
-cd opentofu/prerequisites
-PLAN_FILE="${PWD}/.tf-plan"
+#!/bin/bash
+
+PARENT_DIR=${PWD}
+PRE_REQ_DIR="${PARENT_DIR}/opentofu/prerequisites"
+PLAN_FILE="${PRE_REQ_DIR}/.tf-plan"
+AZURE_TENANT_ID=${1}
+DESTROY=${2}
 
 function cleanup {
   echo "Removing Plan File: ${PLAN_FILE}"
@@ -36,9 +41,18 @@ then
     pip install azure-cli
 fi
 
-tofu init
-if [ "${1}" == "destroy" ]
+if [ $(az account list | grep -c "${AZURE_TENANT_ID}") -eq 0 ]
 then
+    az login --allow-no-subscriptions --tenant "${AZURE_TENANT_ID}" --use-device-code
+fi
+
+cd "${PRE_REQ_DIR}"
+
+tofu init
+TYPE="apply"
+if [ "$(echo ${DESTROY} | tr '[:upper:]' '[:lower:]')" == "destroy" ]
+then
+    TYPE="destroy"
     tofu plan -out=${PLAN_FILE} -destroy
 else
     tofu plan -out=${PLAN_FILE}
@@ -48,12 +62,7 @@ then
     exit
 fi
 
-if [ "${1}" == "destroy" ]
-then
-    read -p "Continue with destroy [Yes/no]? " ANSWER
-else
-    read -p "Continue with apply [Yes/no]? " ANSWER
-fi
+read -p "Continue with ${TYPE} [Yes/no]? " ANSWER
 ANSWER=$(echo ${ANSWER} | tr '[:upper:]' '[:lower:]')
 ANSWER=${ANSWER:-yes}
 
