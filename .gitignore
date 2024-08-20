@@ -7,3 +7,5 @@ terraform.tfstate.backup
 .bitwarden
 package-lock.json
 package.json
+.terraform.tfstate.lock.info
+.tf-plan
