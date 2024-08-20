@@ -18,8 +18,43 @@ variable "bitwarden-client-secret" {
   type        = string
 }
 
-variable "bitwarden-folder" {
-  description = "Name of the folder all automation secrets are kept in."
+variable "bitwarden-organization" {
+  description = "BitWarden Organization that secrets live in"
   type        = string
   default     = "starfleet-home-automation"
+}
+
+variable "azure-state-storage-account-name" {
+  description = "Storage Account name that contains the container to store state files in."
+  type        = string
+}
+
+variable "azure-state-storage-container-name" {
+  description = "Azure Storage Container to store the state files in."
+  type        = string
+}
+
+variable "azure-state-storage-key" {
+  description = "Name of the state storage file."
+  type        = string
+}
+
+variable "azure-state-storage-subscription-id" {
+  description = "Subscription ID containig the Azure Storage Container to store the state files in."
+  type        = string
+}
+
+variable "azure-state-storage-tenant-id" {
+  description = "Tenant ID containig the Azure Storage Container to store the state files in."
+  type        = string
+}
+
+variable "azure-state-storage-client-id" {
+  description = "Client ID containig the Azure Storage Container to store the state files in."
+  type        = string
+}
+
+variable "azure-state-storage-client-secret" {
+  description = "Subscription containig the Azure Storage Container to store the state files in."
+  type        = string
 }
