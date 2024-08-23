@@ -14,7 +14,10 @@
     {
       "matchFiles": ["**/ansible/inventory/*"],
       "groupName": "ansible inventory updates"
+    },
+    {
+      "matchDatasources": ["terraform-provider"],
+      "registryUrls": ["https://registry.opentofu.org"]
     }
   ]
 }
-
