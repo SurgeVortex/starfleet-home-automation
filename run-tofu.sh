@@ -42,7 +42,7 @@ fi
 
 cd "${PRE_REQ_DIR}"
 
-tofu init
+tofu init -upgrade
 TYPE="apply"
 if [ "$(echo ${DESTROY} | tr '[:upper:]' '[:lower:]')" == "destroy" ]
 then
