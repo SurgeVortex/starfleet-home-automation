@@ -38,6 +38,7 @@ provider "azurerm" {
   features {}
   environment         = "Public"
   storage_use_azuread = true
+  subscription_id     = var.azure-state-storage-subscription-id
 }
 
 provider "azuread" {
