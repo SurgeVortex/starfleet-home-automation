@@ -6,7 +6,7 @@ ANSIBLE_LOG="${LOGS_PARENT_DIR}/ansible.log"
 WORKING_DIR="/opt/starfleet"
 GIT_REPO="https://github.com/SurgeVortex/starfleet-home-automation.git"
 TOFU_RUN="${WORKING_DIR}/run-tofu.sh"
-ANSIBLE_RUN="${WORKING_DIR}/ansible-run.sh"
+ANSIBLE_RUN="${WORKING_DIR}/run-ansible.sh"
 TIMEOUT=30m
 
 # Function to check if a command is already installed
@@ -65,9 +65,6 @@ if ! command_exists ansible
 then
     echo "Ansible not found, installing now."
     sudo pip install ansible argcomplete
-    # sudo pipx inject --include-apps ansible 
-    # sudo pipx ensurepath
-    # pipx ensurepath
     (
         sudo activate-global-python-argcomplete3
         activate-global-python-argcomplete3
@@ -108,11 +105,11 @@ fi
 if ! crontab -l | grep -q "$TOFU_RUN >> $TOFU_LOG"
 then
     echo "Adding cron job for OpenTOFU"
-    (crontab -l 2>/dev/null; echo "*/5 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $TOFU_RUN >> $TOFU_LOG") | crontab -
+    (crontab -l 2>/dev/null; echo "*/5 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $TOFU_RUN >> $TOFU_LOG 2>&1") | crontab -
 fi
 
 if ! crontab -l | grep -q "$ANSIBLE_RUN >> $ANSIBLE_LOG"
 then
     echo "Adding cron job for Ansible"
-    (crontab -l 2>/dev/null; echo "*/10 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $ANSIBLE_RUN >> $ANSIBLE_LOG") | crontab -
+    (crontab -l 2>/dev/null; echo "*/10 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $ANSIBLE_RUN >> $ANSIBLE_LOG 2>&1") | crontab -
 fi
