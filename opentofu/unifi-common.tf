@@ -123,6 +123,17 @@ resource "unifi_user" "users" {
   user_group_id   = unifi_user_group.user-groups[each.value.network_name].id
 }
 
+resource "unifi_user" "servers" {
+  for_each        = var.proxmox-vms
+  mac             = lower(proxmox_virtual_environment_vm.virtual-machines[each.key].network_device[0].mac_address)
+  name            = each.value.name
+  note            = each.value.description != null ? each.value.description : "Server Hosted on Proxmox"
+  fixed_ip        = try(split("/", proxmox_virtual_environment_vm.virtual-machines[each.key].ip_config[0].ipv4[0].address)[0], null)
+  dev_id_override = try(each.value.device_id, 0)
+  network_id      = unifi_network.vlans["servers"].id
+  user_group_id   = unifi_user_group.user-groups["servers"].id
+}
+
 data "unifi_ap_group" "default" {
 }
 
