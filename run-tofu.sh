@@ -16,13 +16,6 @@ OPENTOFU_DIR="${PARENT_DIR}/opentofu"
 PLAN_FILE="${OPENTOFU_DIR}/.tf-plan"
 BITWARDEN_DIR="${OPENTOFU_DIR}/.bitwarden"
 
-# Check if the tfvars file exists
-if [ -f "${OPENTOFU_DIR}/terraform.tfvars" ]; then
-    echo "tfvars file already exists. Skipping..."
-else
-    source "${OPENTOFU_DIR}/scripts/retrieve-tfvars.sh"
-fi
-
 function cleanup {
   echo "Removing Plan File: ${PLAN_FILE}"
   rm  ${PLAN_FILE}
@@ -56,6 +49,13 @@ then
     nvm use --lts
     npm install -g --registry https://registry.npmjs.org/ @bitwarden/cli 
 fi
+
+# # Check if the tfvars file exists
+# if [ -f "${OPENTOFU_DIR}/terraform.tfvars" ]; then
+#     echo "tfvars file already exists. Skipping..."
+# else
+    source "${OPENTOFU_DIR}/scripts/retrieve-tfvars.sh"
+# fi
 
 if [ $(az account list | grep -c "${AZURE_TENANT_ID}") -eq 0 ]
 then
