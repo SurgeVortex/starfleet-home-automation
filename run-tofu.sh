@@ -2,6 +2,9 @@
 # Get the name of the script
 SCRIPT_NAME=$(basename "$0")
 
+# Load environment variables from .profile
+source ~/.profile
+
 # Check if the lock file exists
 if [ -f "/tmp/${SCRIPT_NAME}.lock" ]; then
     echo "Script is already running. Exiting..."
