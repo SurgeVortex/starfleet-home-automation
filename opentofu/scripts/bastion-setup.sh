@@ -8,6 +8,9 @@ GIT_REPO="https://github.com/SurgeVortex/starfleet-home-automation.git"
 TOFU_RUN="${WORKING_DIR}/run-tofu.sh auto-approve"
 ANSIBLE_RUN="${WORKING_DIR}/run-ansible.sh"
 TIMEOUT=30m
+LOG_ROTATE_CONF="/etc/logrotate.d/starfleet"
+ROTATE_COUNT=5
+ROTATE_SIZE="10M"
 
 # Function to check if a command is already installed
 command_exists() {
@@ -71,6 +74,14 @@ then
     ) | bash
 fi
 
+# Ensure logrotate is installed
+if ! command_exists logrotate
+then
+    echo "logrotate not found, installing now."
+    sudo apt-get update
+    sudo NEEDRESTART_MODE=a apt-get install -y logrotate
+fi
+
 # Ensure log files are created and owned by the current user
 if [ ! -f "$TOFU_LOG" ] || [ "$(stat -c %U "$TOFU_LOG")" != "$USER" ]
 then
@@ -113,3 +124,31 @@ then
     echo "Adding cron job for Ansible"
     (crontab -l 2>/dev/null; echo "*/10 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $ANSIBLE_RUN >> $ANSIBLE_LOG 2>&1") | crontab -
 fi
+
+# Create logrotate configuration if it doesn't exist
+if [ ! -f "$LOG_ROTATE_CONF" ]
+then
+    echo "Creating logrotate configuration: $LOG_ROTATE_CONF"
+    sudo tee "$LOG_ROTATE_CONF" > /dev/null <<EOL
+$TOFU_LOG {
+    rotate $ROTATE_COUNT
+    size $ROTATE_SIZE
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
+
+$ANSIBLE_LOG {
+    rotate $ROTATE_COUNT
+    size $ROTATE_SIZE
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
+EOL
+fi
+
+# Force logrotate to apply the new configuration
+sudo logrotate -f "$LOG_ROTATE_CONF"
