@@ -10,6 +10,12 @@ variable "ssh-credentials-name" {
   default     = "SSH Credentials"
 }
 
+variable "bitwarden-api-credentials-name" {
+  description = "Credentials for BitWarden API access."
+  type        = string
+  default     = "Bitwarden API Credentials"
+}
+
 variable "proxmox-cloud-images" {
   description = "Cloud images to download."
   type = map(object({
