@@ -5,7 +5,7 @@ TOFU_LOG="${LOGS_PARENT_DIR}/tofu.log"
 ANSIBLE_LOG="${LOGS_PARENT_DIR}/ansible.log"
 WORKING_DIR="/opt/starfleet"
 GIT_REPO="https://github.com/SurgeVortex/starfleet-home-automation.git"
-TOFU_RUN="${WORKING_DIR}/run-tofu.sh" # auto-approve"
+TOFU_RUN="${WORKING_DIR}/run-tofu.sh auto-approve"
 ANSIBLE_RUN="${WORKING_DIR}/run-ansible.sh"
 TIMEOUT=30m
 
