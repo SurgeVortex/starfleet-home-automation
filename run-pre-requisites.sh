@@ -1,4 +1,15 @@
 #!/bin/bash
+# Get the name of the script
+SCRIPT_NAME=$(basename "$0")
+
+# Check if the lock file exists
+if [ -f "/tmp/${SCRIPT_NAME}.lock" ]; then
+    echo "Script is already running. Exiting..."
+    exit 1
+fi
+
+# Create the lock file
+touch "/tmp/${SCRIPT_NAME}.lock"
 
 PARENT_DIR=${PWD}
 PRE_REQ_DIR="${PARENT_DIR}/opentofu/prerequisites"
@@ -9,6 +20,8 @@ DESTROY=${2}
 function cleanup {
   echo "Removing Plan File: ${PLAN_FILE}"
   rm  ${PLAN_FILE}
+  echo "Removing Lock File: /tmp/${SCRIPT_NAME}.lock"
+  touch "/tmp/${SCRIPT_NAME}.lock"
 }
 
 trap cleanup EXIT
