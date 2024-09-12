@@ -21,6 +21,8 @@ function cleanup {
   rm  ${PLAN_FILE}
   echo "Removing Lock File: /tmp/${SCRIPT_NAME}.lock"
   rm "/tmp/${SCRIPT_NAME}.lock"
+  echo "Removing tfvars file: ${OPENTOFU_DIR}/terraform.tfvars"
+  rm -f "${OPENTOFU_DIR}/terraform.tfvars"
 #   echo "Removing Bitwarden Directory: ${BITWARDEN_DIR}"
 #   rm -rf ${BITWARDEN_DIR}
 }
