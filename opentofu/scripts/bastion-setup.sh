@@ -29,6 +29,13 @@ then
     sudo NEEDRESTART_MODE=a apt-get install -y python3-pip
 fi
 
+if ! command_exists jq
+then
+    echo "jq not found, installing now."
+    sudo apt-get update
+    sudo NEEDRESTART_MODE=a apt-get install -y jq
+fi
+
 if ! command_exists pipx
 then
     echo "pipx not found, installing now."
