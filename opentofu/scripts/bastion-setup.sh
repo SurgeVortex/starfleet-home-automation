@@ -149,6 +149,3 @@ $ANSIBLE_LOG {
 }
 EOL
 fi
-
-# Force logrotate to apply the new configuration
-sudo logrotate -f "$LOG_ROTATE_CONF"
