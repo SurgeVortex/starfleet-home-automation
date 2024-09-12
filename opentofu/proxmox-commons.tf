@@ -1,5 +1,5 @@
 locals {
-  ssh-credentials-secrets = { for field in data.bitwarden_item_login.ssh-credentials.field : field.name => field.text }
+  ssh-credentials-secrets    = { for field in data.bitwarden_item_login.ssh-credentials.field : field.name => field.text }
   bw-api-credentials-secrets = { for field in data.bitwarden_item_login.bitwarden-api-credentials.field : field.name => field.text }
 }
 
