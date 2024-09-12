@@ -64,7 +64,7 @@ fi
 
 if [ $(az account list | grep -c "${AZURE_TENANT_ID}") -eq 0 ]
 then
-    az login --allow-no-subscriptions --tenant "${AZURE_TENANT_ID}" --use-device-code
+    az login --service-principal --username "${AZURE_CLIENT_ID}" --password "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}" --subscription "${AZURE_SUBSCRIPTION_ID}"
 fi
 
 cd "${OPENTOFU_DIR}"
