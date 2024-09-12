@@ -143,8 +143,12 @@ resource "null_resource" "setup_bastion" {
     source      = "${path.module}/scripts/bastion-setup.sh"
     destination = "/tmp/script.sh"
   }
+
   provisioner "remote-exec" {
     inline = [
+      "mkdir -p ~/.ssh",
+      "if [ ! -f ~/.ssh/id_rsa ]; then echo '${data.bitwarden_item_login.ssh-credentials.notes}' > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; fi",
+      "if [ ! -f ~/.ssh/id_rsa.pub ]; then echo '${local.ssh-credentials-secrets.ssh-public-key}' > ~/.ssh/id_rsa.pub; chmod 644 ~/.ssh/id_rsa.pub; fi",
       "if ! grep -q 'BW_EMAIL' ~/.profile; then echo 'export BW_EMAIL=${data.bitwarden_item_login.bitwarden-api-credentials.username}' >> ~/.profile; fi",
       "if ! grep -q 'BW_MASTER_PASSWORD' ~/.profile; then echo 'export BW_MASTER_PASSWORD=${data.bitwarden_item_login.bitwarden-api-credentials.password}' >> ~/.profile; fi",
       "if ! grep -q 'BW_CLIENTID' ~/.profile; then echo 'export BW_CLIENTID=${local.bw-api-credentials-secrets.client-id}' >> ~/.profile; fi",
