@@ -36,11 +36,11 @@ then
     sudo NEEDRESTART_MODE=a apt-get install -y jq
 fi
 
-if ! command_exists pipx
+if ! command_exists az
 then
-    echo "pipx not found, installing now."
+    echo "az not found, installing now."
     sudo apt-get update
-    sudo NEEDRESTART_MODE=a apt-get install -y pipx
+    sudo pip install azure-cli
 fi
 
 if ! command_exists curl
