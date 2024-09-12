@@ -21,6 +21,10 @@ terraform {
       source  = "bpg/proxmox"
       version = "0.63.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6.2"
+    }
     null = {
       source  = "hashicorp/null"
       version = "3.2.2"
