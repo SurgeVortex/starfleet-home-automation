@@ -6,7 +6,6 @@ ANSIBLE_LOG="${LOGS_PARENT_DIR}/ansible.log"
 WORKING_DIR="/opt/starfleet"
 GIT_REPO="https://github.com/SurgeVortex/starfleet-home-automation.git"
 TOFU_RUN="${WORKING_DIR}/run-tofu.sh auto-approve"
-ANSIBLE_RUN="${WORKING_DIR}/run-ansible.sh"
 TIMEOUT=30m
 LOG_ROTATE_CONF="/etc/logrotate.d/starfleet"
 ROTATE_COUNT=5
@@ -39,6 +38,7 @@ then
     sudo NEEDRESTART_MODE=a apt-get install -y jq
 fi
 
+# Ensure azure-cli is installed
 if ! command_exists az
 then
     echo "az not found, installing now."
@@ -46,6 +46,7 @@ then
     sudo pip install azure-cli
 fi
 
+# Ensure curl is installed
 if ! command_exists curl
 then
     echo "curl not found, installing now."
@@ -90,6 +91,7 @@ then
     sudo chown $USER:$USER "$TOFU_LOG"
 fi
 
+# Ensure log files are created and owned by the current user
 if [ ! -f "$ANSIBLE_LOG" ] || [ "$(stat -c %U "$ANSIBLE_LOG")" != "$USER" ]
 then
     echo "Creating log file: $ANSIBLE_LOG"
@@ -119,27 +121,12 @@ then
     (crontab -l 2>/dev/null; echo "*/5 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $TOFU_RUN >> $TOFU_LOG 2>&1") | crontab -
 fi
 
-if ! crontab -l | grep -q "$ANSIBLE_RUN >> $ANSIBLE_LOG"
-then
-    echo "Adding cron job for Ansible"
-    (crontab -l 2>/dev/null; echo "*/10 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $ANSIBLE_RUN >> $ANSIBLE_LOG 2>&1") | crontab -
-fi
-
 # Create logrotate configuration if it doesn't exist
 if [ ! -f "$LOG_ROTATE_CONF" ]
 then
     echo "Creating logrotate configuration: $LOG_ROTATE_CONF"
     sudo tee "$LOG_ROTATE_CONF" > /dev/null <<EOL
 $TOFU_LOG {
-    rotate $ROTATE_COUNT
-    size $ROTATE_SIZE
-    compress
-    missingok
-    notifempty
-    copytruncate
-}
-
-$ANSIBLE_LOG {
     rotate $ROTATE_COUNT
     size $ROTATE_SIZE
     compress
