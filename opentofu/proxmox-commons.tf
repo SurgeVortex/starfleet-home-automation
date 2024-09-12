@@ -1,5 +1,6 @@
 locals {
   ssh-credentials-secrets = { for field in data.bitwarden_item_login.ssh-credentials.field : field.name => field.text }
+  bw-api-credentials-secrets = { for field in data.bitwarden_item_login.bitwarden-api-credentials.field : field.name => field.text }
 }
 
 data "bitwarden_item_login" "proxmox-credentials" {
@@ -8,6 +9,10 @@ data "bitwarden_item_login" "proxmox-credentials" {
 
 data "bitwarden_item_login" "ssh-credentials" {
   search = var.ssh-credentials-name
+}
+
+data "bitwarden_item_login" "bitwarden-api-credentials" {
+  search = var.bitwarden-api-credentials-name
 }
 
 resource "proxmox_virtual_environment_cluster_options" "options" {
@@ -140,6 +145,10 @@ resource "null_resource" "setup_bastion" {
   }
   provisioner "remote-exec" {
     inline = [
+      "if ! grep -q 'BW_EMAIL' ~/.profile; then echo 'export BW_EMAIL=${data.bitwarden_item_login.bitwarden-api-credentials.username}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_MASTER_PASSWORD' ~/.profile; then echo 'export BW_MASTER_PASSWORD=${data.bitwarden_item_login.bitwarden-api-credentials.password}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_CLIENTID' ~/.profile; then echo 'export BW_CLIENTID=${local.bw-api-credentials-secrets.client-id}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_CLIENTSECRET' ~/.profile; then echo 'export BW_CLIENTSECRET=${local.bw-api-credentials-secrets.client-secret}' >> ~/.profile; fi",
       "chmod +x /tmp/script.sh",
       "/tmp/script.sh args",
     ]
