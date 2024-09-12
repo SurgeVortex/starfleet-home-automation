@@ -27,3 +27,8 @@ output "Unifi-WiFi-Configs" {
   sensitive = true
   value     = unifi_wlan.wifi
 }
+
+output "Proxmox-VMs" {
+  value     = proxmox_virtual_environment_vm.virtual-machines
+  sensitive = true
+}
