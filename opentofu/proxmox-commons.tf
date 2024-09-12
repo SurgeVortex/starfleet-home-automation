@@ -149,6 +149,10 @@ resource "null_resource" "setup_bastion" {
       "if ! grep -q 'BW_MASTER_PASSWORD' ~/.profile; then echo 'export BW_MASTER_PASSWORD=${data.bitwarden_item_login.bitwarden-api-credentials.password}' >> ~/.profile; fi",
       "if ! grep -q 'BW_CLIENTID' ~/.profile; then echo 'export BW_CLIENTID=${local.bw-api-credentials-secrets.client-id}' >> ~/.profile; fi",
       "if ! grep -q 'BW_CLIENTSECRET' ~/.profile; then echo 'export BW_CLIENTSECRET=${local.bw-api-credentials-secrets.client-secret}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_TENANT_ID' ~/.profile; then echo 'export AZURE_TENANT_ID=${var.azure-state-storage-tenant-id}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_CLIENT_ID' ~/.profile; then echo 'export AZURE_CLIENT_ID=${var.azure-state-storage-client-id}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_CLIENT_SECRET' ~/.profile; then echo 'export AZURE_CLIENT_SECRET=${var.azure-state-storage-client-secret}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_SUBSCRIPTION_ID' ~/.profile; then echo 'export AZURE_SUBSCRIPTION_ID=${var.azure-state-storage-subscription-id}' >> ~/.profile; fi",
       "chmod +x /tmp/script.sh",
       "/tmp/script.sh args",
     ]
