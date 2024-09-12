@@ -11,10 +11,17 @@ fi
 # Create the lock file
 touch "/tmp/${SCRIPT_NAME}.lock"
 
-PARENT_DIR=${PWD}
+PARENT_DIR=$(dirname "$(readlink -f "$0")")
 OPENTOFU_DIR="${PARENT_DIR}/opentofu"
 PLAN_FILE="${OPENTOFU_DIR}/.tf-plan"
 BITWARDEN_DIR="${OPENTOFU_DIR}/.bitwarden"
+
+# Check if the tfvars file exists
+if [ -f "${OPENTOFU_DIR}/terraform.tfvars" ]; then
+    echo "tfvars file already exists. Skipping..."
+else
+    source "${OPENTOFU_DIR}/scripts/retrieve-tfvars.sh"
+fi
 
 function cleanup {
   echo "Removing Plan File: ${PLAN_FILE}"
