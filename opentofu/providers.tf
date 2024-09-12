@@ -17,6 +17,10 @@ terraform {
       source  = "ubiquiti-community/unifi"
       version = "0.41.2"
     }
+    proxmox = {
+      source  = "bpg/proxmox"
+      version = "0.63.0"
+    }
     null = {
       source  = "hashicorp/null"
       version = "3.2.2"
@@ -57,4 +61,12 @@ provider "unifi" {
   password       = data.bitwarden_item_login.unifi-credentials.password
   api_url        = var.unifi-api-url
   allow_insecure = var.unifi-insecure
+}
+
+provider "proxmox" {
+  endpoint = data.bitwarden_item_login.proxmox-credentials.uri[0].value
+  username = data.bitwarden_item_login.proxmox-credentials.username
+  password = data.bitwarden_item_login.proxmox-credentials.password
+  insecure = true
+  tmp_dir  = "/var/tmp"
 }
