@@ -21,7 +21,7 @@ resource "null_resource" "install_k3s" {
     inline = [
       "export K3S_SECRET=${random_password.k3s_secret.result}",
       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
-      "curl -sfL https://get.k3s.io | sh -s - server --cluste-init --tls-san ${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
+      "curl -sfL https://get.k3s.io | sh -s - server --cluster-init --tls-san ${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
     ]
   }
 }
