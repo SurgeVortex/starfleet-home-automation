@@ -21,30 +21,30 @@ resource "null_resource" "install_k3s" {
     inline = [
       "export K3S_SECRET=${random_password.k3s_secret.result}",
       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
-      "curl -sfL https://get.k3s.io | sh -s - server --cluster-init --tls-san ${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
+      "curl -sfL https://get.k3s.io | sh -s - server --cluster-init --tls-san=${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
     ]
   }
 }
 
-resource "null_resource" "install_kubevip" {
-  depends_on = [null_resource.install_k3s]
+# resource "null_resource" "install_kubevip" {
+#   depends_on = [null_resource.install_k3s]
 
-  provisioner "local-exec" {
-    command = <<EOT
-            K3S_NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-            kubectl label node $K3S_NODE kube-vip.io/egress=true
-            kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
-            alias kube-vip="docker run --network host --rm plndr/kube-vip:0.3.7"
-            kube-vip manifest daemonset \
-                --arp \
-                --interface eth0 \
-                --address 192.168.0.100 \
-                --controlplane \
-                --services \
-                --leaderElection | kubectl apply -f -
-        EOT
-  }
-}
+#   provisioner "local-exec" {
+#     command = <<EOT
+#             K3S_NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+#             kubectl label node $K3S_NODE kube-vip.io/egress=true
+#             kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
+#             alias kube-vip="docker run --network host --rm plndr/kube-vip:0.3.7"
+#             kube-vip manifest daemonset \
+#                 --arp \
+#                 --interface eth0 \
+#                 --address 192.168.0.100 \
+#                 --controlplane \
+#                 --services \
+#                 --leaderElection | kubectl apply -f -
+#         EOT
+#   }
+# }
 
 # resource "null_resource" "join_k3s_nodes" {
 #   count = length(proxmox_vm_qemu.k3s_nodes)
