@@ -23,7 +23,7 @@ resource "null_resource" "install_k3s" {
       "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
       "curl -sfL https://get.k3s.io | sh -s - server --cluster-init --tls-san=${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
-    #   k3sup join --ip 192.168.1.22 --user dmistry --sudo --k3s-channel stable --server --server-ip 192.168.1.20 --server-user dmistry --sudo --k3s-extra-args "--disable traefik  --disable servicelb --node-ip=192.168.1.22"
+    #   k3sup join --ip 192.168.1.22 --server --server-ip 192.168.1.20 --server-user dmistry --sudo --k3s-extra-args "--disable traefik  --disable servicelb --node-ip=192.168.1.22"
     ]
   }
 }
