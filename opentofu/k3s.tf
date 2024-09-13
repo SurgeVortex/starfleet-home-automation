@@ -28,7 +28,7 @@ resource "null_resource" "install_k3s" {
 }
 
 resource "null_resource" "install_kubevip" {
-  for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? ["k8s-master-1"] : [], [])
+  for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
   depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
 
   triggers = {
@@ -54,23 +54,18 @@ resource "null_resource" "install_kubevip" {
 }
 
 # resource "null_resource" "join_k3s_nodes" {
-#   count = length(proxmox_vm_qemu.k3s_nodes)
+#   for_each   = { for vm in proxmox_virtual_environment_vm.virtual-machines: vm.name => vm if vm.name != "k8s-master-1" }
 
 #   depends_on = [null_resource.install_kubevip]
 
-#   provisioner "local-exec" {
-#     environment = {
-#       K3S_SECRET = random_password.k3s_secret.result
-#       K3S_URL    = "https://${proxmox_vm_qemu.k3s-master-1.network_interface[0].ip_address}:6443"
-#     }
-
-#     command = <<EOT
+#   provisioner "remote-exec" {
+#     inline = [
 #             if [[ "${proxmox_vm_qemu.k3s_nodes[count.index].name}" == *"master"* ]]; then
 #                 curl -sfL https://get.k3s.io | K3S_TOKEN=${K3S_SECRET} sh -s - server --server ${K3S_URL}
 #             else
 #                 curl -sfL https://get.k3s.io | K3S_TOKEN=${K3S_SECRET} sh -s - agent --server ${K3S_URL}
 #             fi
-#         EOT
+#      ]
 #   }
 # }
 
