@@ -4,12 +4,15 @@ resource "random_password" "k3s_secret" {
 }
 
 resource "null_resource" "install_k3s" {
-  depends_on = [proxmox_virtual_environment_vm.virtual-machines["k3s-master-1"]]
+  depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
 
+  triggers = {
+    run-resource = var.trigger-k3s-install
+  }
 
   connection {
     type        = "ssh"
-    host        = split("/", proxmox_virtual_environment_vm.virtual-machines["k3s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    host        = split("/", proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
     user        = data.bitwarden_item_login.ssh-credentials.username
     private_key = data.bitwarden_item_login.ssh-credentials.notes
   }
@@ -17,7 +20,8 @@ resource "null_resource" "install_k3s" {
   provisioner "remote-exec" {
     inline = [
       "export K3S_SECRET=${random_password.k3s_secret.result}",
-      "curl -sfL https://get.k3s.io | sh -s - server --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
+      "export K3S_KUBECONFIG_MODE=644",
+      "curl -sfL https://get.k3s.io | sh -s - server --tls-san ${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
     ]
   }
 }
