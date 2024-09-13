@@ -29,7 +29,7 @@ resource "null_resource" "install_k3s" {
 
 resource "null_resource" "install_kubevip" {
   for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
-  depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
+  depends_on = [null_resource.install_k3s]
 
   triggers = {
     run-resource = var.trigger-k3s-install
@@ -46,7 +46,7 @@ resource "null_resource" "install_kubevip" {
     inline = [
       "kubectl apply -f https://kube-vip.io/manifests/rbac.yaml",
       "alias kube-vip='ctr run --rm --net-host docker.io/plndr/kube-vip:latest vip /kube-vip'",
-      "kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s-controlplane-ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
+      "sudo kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s-controlplane-ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
       "kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml",
       "kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s-loadbalancer-ip-range}"
     ]
@@ -54,9 +54,16 @@ resource "null_resource" "install_kubevip" {
 }
 
 # resource "null_resource" "join_k3s_nodes" {
-#   for_each   = { for vm in proxmox_virtual_environment_vm.virtual-machines: vm.name => vm if vm.name != "k8s-master-1" }
+#   for_each   = { for vm in proxmox_virtual_environment_vm.virtual-machines: vm.name => vm if contains(lower(vm.name), "k8s") && !contains(lower(vm.name), "k8s-master-1") }
 
 #   depends_on = [null_resource.install_kubevip]
+
+#   connection {
+#     type        = "ssh"
+#     host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
+#     user        = nonsensitive(data.bitwarden_item_login.ssh-credentials.username)
+#     private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
+#   }
 
 #   provisioner "remote-exec" {
 #     inline = [
