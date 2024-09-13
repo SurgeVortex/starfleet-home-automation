@@ -13,13 +13,13 @@ resource "null_resource" "install_k3s" {
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
-    user        = data.bitwarden_item_login.ssh-credentials.username
-    private_key = data.bitwarden_item_login.ssh-credentials.notes
+    user        = nonsensitive(data.bitwarden_item_login.ssh-credentials.username)
+    private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
   }
 
   provisioner "remote-exec" {
     inline = [
-      "export K3S_SECRET=${random_password.k3s_secret.result}",
+      "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
       "curl -sfL https://get.k3s.io | sh -s - server --cluster-init --tls-san=${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
     ]
