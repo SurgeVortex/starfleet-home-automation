@@ -20,7 +20,7 @@ resource "null_resource" "install_k3s" {
   provisioner "remote-exec" {
     inline = [
       "export K3S_SECRET=${random_password.k3s_secret.result}",
-      "export K3S_KUBECONFIG_MODE=644",
+      "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
       "curl -sfL https://get.k3s.io | sh -s - server --tls-san ${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
     ]
   }
