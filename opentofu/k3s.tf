@@ -4,6 +4,7 @@ resource "random_password" "k3s_secret" {
 }
 
 resource "null_resource" "install_k3s" {
+  for_each   = try(proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"] != null ? ["k8s-master-1"] : [], [])
   depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
 
   triggers = {
@@ -26,25 +27,31 @@ resource "null_resource" "install_k3s" {
   }
 }
 
-# resource "null_resource" "install_kubevip" {
-#   depends_on = [null_resource.install_k3s]
+resource "null_resource" "install_kubevip" {
+  for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? ["k8s-master-1"] : [], [])
+  depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
 
-#   provisioner "local-exec" {
-#     command = <<EOT
-#             K3S_NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-#             kubectl label node $K3S_NODE kube-vip.io/egress=true
-#             kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
-#             alias kube-vip="docker run --network host --rm plndr/kube-vip:0.3.7"
-#             kube-vip manifest daemonset \
-#                 --arp \
-#                 --interface eth0 \
-#                 --address 192.168.0.100 \
-#                 --controlplane \
-#                 --services \
-#                 --leaderElection | kubectl apply -f -
-#         EOT
-#   }
-# }
+  triggers = {
+    run-resource = var.trigger-k3s-install
+  }
+
+  connection {
+    type        = "ssh"
+    host        = split("/", proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = nonsensitive(data.bitwarden_item_login.ssh-credentials.username)
+    private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "kubectl apply -f https://kube-vip.io/manifests/rbac.yaml",
+      "alias kube-vip='ctr run --rm --net-host docker.io/plndr/kube-vip:latest vip /kube-vip'",
+      "kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s-controlplane-ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
+      "kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml",
+      "kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s-loadbalancer-ip-range}"
+    ]
+  }
+}
 
 # resource "null_resource" "join_k3s_nodes" {
 #   count = length(proxmox_vm_qemu.k3s_nodes)

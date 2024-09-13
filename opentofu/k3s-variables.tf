@@ -6,14 +6,14 @@ variable "k3s-controlplane-ip" {
 
 variable "k3s-loadbalancer-ip-range" {
   description = "The IP range for the K3s load balancer"
-  default     = ""
+  default     = "192.168.40.20-192.168.40.30"
   type        = string
 }
 
 variable "k3s-config-mode" {
   description = "The mode for the K3s kubeconfig"
-    default     = "644"
-    type        = string
+  default     = "644"
+  type        = string
 }
 
 variable "trigger-k3s-install" {
