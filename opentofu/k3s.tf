@@ -4,7 +4,7 @@ resource "random_password" "k3s_secret" {
 }
 
 resource "null_resource" "install_k3s" {
-  for_each   = try(proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"] != null ? ["k8s-master-1"] : [], [])
+  for_each   = try(proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
   depends_on = [proxmox_virtual_environment_vm.virtual-machines["k8s-master-1"]]
 
   triggers = {
