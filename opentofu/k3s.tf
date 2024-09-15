@@ -59,26 +59,26 @@ resource "null_resource" "install_kubevip" {
   }
 }
 
-# resource "null_resource" "join_k3s_nodes" {
-#   for_each   = { for vm in proxmox_virtual_environment_vm.virtual-machines: vm.name => vm if strcontains(lower(vm.name), "k8s") && !strcontains(lower(vm.name), "k8s-master-1") }
+resource "null_resource" "join_k3s_nodes" {
+  for_each   = { for vm in proxmox_virtual_environment_vm.virtual-machines: vm.name => vm if strcontains(lower(vm.name), "k8s") && !strcontains(lower(vm.name), "k8s-master-1") }
 
-#   depends_on = [null_resource.install_kubevip]
+  depends_on = [null_resource.install_kubevip]
 
-#   connection {
-#     type        = "ssh"
-#     host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
-#     user        = nonsensitive(data.bitwarden_item_login.ssh-credentials.username)
-#     private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
-#   }
+  connection {
+    type        = "ssh"
+    host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = nonsensitive(data.bitwarden_item_login.ssh-credentials.username)
+    private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
+  }
 
-#   provisioner "remote-exec" {
-#     inline = [
-#       "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
-#       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
-#       "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
-#     ]
-#   }
-# }
+  provisioner "remote-exec" {
+    inline = [
+      "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
+      "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
+      "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
+    ]
+  }
+}
 
 # resource "null_resource" "install_fluxcd" {
 #   depends_on = [null_resource.join_k3s_nodes]
