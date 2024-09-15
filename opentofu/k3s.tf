@@ -52,10 +52,10 @@ resource "null_resource" "install_kubevip" {
   provisioner "remote-exec" {
     inline = [
       "kubectl apply -f https://kube-vip.io/manifests/rbac.yaml",
-      "alias kube-vip='ctr run --rm --net-host docker.io/plndr/kube-vip:latest vip /kube-vip'",
+      "alias kube-vip='ctr image pull ghcr.io/kube-vip/kube-vip:latest; ctr run --rm --net-host docker.io/plndr/kube-vip:latest vip /kube-vip'",
       "sudo kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s-controlplane-ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
       "kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml",
-    "kubectl get configmap -n kube-system kubevip || kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s-loadbalancer-ip-range}"
+      "kubectl get configmap -n kube-system kubevip || kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s-loadbalancer-ip-range}"
     ]
   }
 }
