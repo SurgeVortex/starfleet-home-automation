@@ -71,6 +71,10 @@ resource "null_resource" "join_k3s_nodes" {
     private_key = nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)
   }
 
+  triggers = {
+    run_always = timestamp()
+  }
+
   provisioner "remote-exec" {
     inline = [
       "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
