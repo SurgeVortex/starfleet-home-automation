@@ -114,11 +114,29 @@ then
     git clone "$GIT_REPO" "$WORKING_DIR"
 fi
 
-# Add cron job if not already present
-if ! crontab -l | grep -q "$TOFU_RUN >> $TOFU_LOG"
+# Create a script to run the OpenTOFU command
+CRON_SCRIPT="/usr/local/bin/run-cron.sh"
+
+if [ ! -f "$CRON_SCRIPT" ]
 then
-    echo "Adding cron job for OpenTOFU"
-    (crontab -l 2>/dev/null; echo "*/5 * * * * cd $WORKING_DIR && git fetch origin && git reset --hard origin/main && timeout ${TIMEOUT} $TOFU_RUN >> $TOFU_LOG 2>&1") | crontab -
+    echo "Creating cron script: $CRON_SCRIPT"
+    sudo tee "$CRON_SCRIPT" > /dev/null <<EOL
+#!/bin/bash
+sudo -u $USER bash <<EOF
+cd $WORKING_DIR
+git fetch origin
+git reset --hard origin/main
+timeout ${TIMEOUT} $TOFU_RUN >> $TOFU_LOG 2>&1
+EOF
+EOL
+    sudo chmod +x "$CRON_SCRIPT"
+fi
+
+# Update cron job to use the new script
+if ! crontab -l | grep -q "$CRON_SCRIPT"
+then
+    echo "Updating cron job to use the new script"
+    (crontab -l 2>/dev/null; echo "*/5 * * * * $CRON_SCRIPT") | crontab -
 fi
 
 # Create logrotate configuration if it doesn't exist
