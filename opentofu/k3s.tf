@@ -1,5 +1,5 @@
 locals {
-  k3s-install-command = "curl -sfL https://get.k3s.io | K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)} K3S_KUBECONFIG_MODE=${var.k3s-config-mode} sh -s -"
+  k3s-install-command = "curl -sfL https://get.k3s.io | K3S_TOKEN=${nonsensitive(random_password.k3s_secret.result)} K3S_KUBECONFIG_MODE=${var.k3s-config-mode} sh -s -"
   k3s-install-options = "--tls-san=${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik"
 }
 
