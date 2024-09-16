@@ -79,7 +79,7 @@ resource "null_resource" "join_k3s_nodes" {
     inline = [
       "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
       "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
-      "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
+      "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server ${local.k3s-install-options}" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
     ]
   }
 }
