@@ -75,7 +75,7 @@ resource "null_resource" "join_k3s_nodes" {
 
   provisioner "remote-exec" {
     inline = [
-      "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server ${local.k3s-install-options}" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
+      "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server" : "agent"} --server https://${var.k3s-controlplane-ip}:6443 ${strcontains(lower(each.value.name), "master") ? local.k3s-install-options : ""}",
     ]
   }
 }
