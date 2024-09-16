@@ -4,8 +4,8 @@ locals {
 }
 
 resource "random_password" "k3s_secret" {
-  length  = 16
-  special = true
+  length  = 32
+  special = false
 }
 
 resource "null_resource" "install_k3s" {
