@@ -1,5 +1,5 @@
 locals {
-  k3s-install-command = "curl -sfL https://get.k3s.io | sh -s -"
+  k3s-install-command = "curl -sfL https://get.k3s.io | K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)} K3S_KUBECONFIG_MODE=${var.k3s-config-mode} sh -s -"
   k3s-install-options = "--tls-san=${var.k3s-controlplane-ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik --node-name=$(hostname -f)"
 }
 
@@ -25,8 +25,6 @@ resource "null_resource" "install_k3s" {
 
   provisioner "remote-exec" {
     inline = [
-      "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
-      "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
       "${local.k3s-install-command} server --cluster-init ${local.k3s-install-options}",
     #   k3sup join --ip 192.168.1.22 --server --server-ip 192.168.1.20 --server-user dmistry --sudo --k3s-extra-args "--disable traefik  --disable servicelb --node-ip=192.168.1.22"
     ]
@@ -77,8 +75,6 @@ resource "null_resource" "join_k3s_nodes" {
 
   provisioner "remote-exec" {
     inline = [
-      "export K3S_SECRET=${nonsensitive(random_password.k3s_secret.result)}",
-      "export K3S_KUBECONFIG_MODE=${var.k3s-config-mode}",
       "${local.k3s-install-command} ${strcontains(lower(each.value.name), "master") ? "server ${local.k3s-install-options}" : "agent"} --server https://${var.k3s-controlplane-ip}:6443",
     ]
   }
