@@ -1,18 +1,18 @@
 locals {
-  ssh-credentials-secrets    = { for field in data.bitwarden_item_login.ssh-credentials.field : field.name => field.text }
-  bw-api-credentials-secrets = { for field in data.bitwarden_item_login.bitwarden-api-credentials.field : field.name => field.text }
+  ssh_credentials_secrets    = { for field in data.bitwarden_item_login.ssh_credentials.field : field.name => field.text }
+  bw_api_credentials_secrets = { for field in data.bitwarden_item_login.bitwarden_api_credentials.field : field.name => field.text }
 }
 
-data "bitwarden_item_login" "proxmox-credentials" {
-  search = var.proxmox-credentials-name
+data "bitwarden_item_login" "proxmox_credentials" {
+  search = var.proxmox_credentials_name
 }
 
-data "bitwarden_item_login" "ssh-credentials" {
-  search = var.ssh-credentials-name
+data "bitwarden_item_login" "ssh_credentials" {
+  search = var.ssh_credentials_name
 }
 
-data "bitwarden_item_login" "bitwarden-api-credentials" {
-  search = var.bitwarden-api-credentials-name
+data "bitwarden_item_login" "bitwarden_api_credentials" {
+  search = var.bitwarden_api_credentials_name
 }
 
 resource "proxmox_virtual_environment_cluster_options" "options" {
@@ -22,7 +22,7 @@ resource "proxmox_virtual_environment_cluster_options" "options" {
 }
 
 resource "proxmox_virtual_environment_download_file" "cloud_images" {
-  for_each     = var.proxmox-cloud-images
+  for_each     = var.proxmox_cloud_images
   content_type = each.value.content_type
   datastore_id = each.value.datastore_id
   node_name    = each.value.node_name
@@ -30,8 +30,8 @@ resource "proxmox_virtual_environment_download_file" "cloud_images" {
   url          = each.value.url
 }
 
-resource "proxmox_virtual_environment_vm" "virtual-machines" {
-  for_each  = var.proxmox-vms
+resource "proxmox_virtual_environment_vm" "virtual_machines" {
+  for_each  = var.proxmox_vms
   name      = each.key
   node_name = each.value.node_name
   bios      = try(each.value.bios, "seabios")
@@ -91,9 +91,9 @@ resource "proxmox_virtual_environment_vm" "virtual-machines" {
       dynamic "user_account" {
         for_each = each.value.is_cloud_init ? ["cloud_init"] : each.value.initialization.user_account != null ? ["user_account"] : []
         content {
-          keys     = each.value.is_cloud_init ? [local.ssh-credentials-secrets.ssh-public-key] : each.value.initialization.user_account.keys
-          username = each.value.is_cloud_init ? data.bitwarden_item_login.ssh-credentials.username : each.value.initialization.user_account.username
-          password = each.value.is_cloud_init ? data.bitwarden_item_login.ssh-credentials.password : each.value.initialization.user_account.password
+          keys     = each.value.is_cloud_init ? [local.ssh_credentials_secrets.ssh-public-key] : each.value.initialization.user_account.keys
+          username = each.value.is_cloud_init ? data.bitwarden_item_login.ssh_credentials.username : each.value.initialization.user_account.username
+          password = each.value.is_cloud_init ? data.bitwarden_item_login.ssh_credentials.password : each.value.initialization.user_account.password
         }
       }
     }
@@ -128,12 +128,12 @@ resource "proxmox_virtual_environment_vm" "virtual-machines" {
 }
 
 resource "null_resource" "setup_bastion" {
-  for_each = try(proxmox_virtual_environment_vm.virtual-machines["bastion"] != null ? { bastion : "bastion" } : {}, {})
+  for_each = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? { bastion : "bastion" } : {}, {})
   connection {
     type        = "ssh"
-    host        = split("/", proxmox_virtual_environment_vm.virtual-machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
-    user        = data.bitwarden_item_login.ssh-credentials.username
-    private_key = data.bitwarden_item_login.ssh-credentials.notes
+    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = data.bitwarden_item_login.ssh_credentials.username
+    private_key = data.bitwarden_item_login.ssh_credentials.notes
 
   }
   triggers = {
@@ -146,16 +146,16 @@ resource "null_resource" "setup_bastion" {
 
   provisioner "remote-exec" {
     inline = [
-      "if [ ! -f ~/.ssh/id_rsa ]; then echo '${nonsensitive(data.bitwarden_item_login.ssh-credentials.notes)}' > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; fi",
-      "if [ ! -f ~/.ssh/id_rsa.pub ]; then echo '${nonsensitive(local.ssh-credentials-secrets.ssh-public-key)}' > ~/.ssh/id_rsa.pub; chmod 644 ~/.ssh/id_rsa.pub; fi",
-      "if ! grep -q 'BW_EMAIL' ~/.profile; then echo 'export BW_EMAIL=${data.bitwarden_item_login.bitwarden-api-credentials.username}' >> ~/.profile; fi",
-      "if ! grep -q 'BW_MASTER_PASSWORD' ~/.profile; then echo 'export BW_MASTER_PASSWORD=${replace(nonsensitive(data.bitwarden_item_login.bitwarden-api-credentials.password), "$", "\\$")}' >> ~/.profile; fi",
-      "if ! grep -q 'BW_CLIENTID' ~/.profile; then echo 'export BW_CLIENTID=${nonsensitive(local.bw-api-credentials-secrets.client-id)}' >> ~/.profile; fi",
-      "if ! grep -q 'BW_CLIENTSECRET' ~/.profile; then echo 'export BW_CLIENTSECRET=${nonsensitive(local.bw-api-credentials-secrets.client-secret)}' >> ~/.profile; fi",
-      "if ! grep -q 'AZURE_TENANT_ID' ~/.profile; then echo 'export AZURE_TENANT_ID=${var.azure-state-storage-tenant-id}' >> ~/.profile; fi",
-      "if ! grep -q 'AZURE_CLIENT_ID' ~/.profile; then echo 'export AZURE_CLIENT_ID=${var.azure-state-storage-client-id}' >> ~/.profile; fi",
-      "if ! grep -q 'AZURE_CLIENT_SECRET' ~/.profile; then echo 'export AZURE_CLIENT_SECRET=${var.azure-state-storage-client-secret}' >> ~/.profile; fi",
-      "if ! grep -q 'AZURE_SUBSCRIPTION_ID' ~/.profile; then echo 'export AZURE_SUBSCRIPTION_ID=${var.azure-state-storage-subscription-id}' >> ~/.profile; fi",
+      "if [ ! -f ~/.ssh/id_rsa ]; then echo '${nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)}' > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa; fi",
+      "if [ ! -f ~/.ssh/id_rsa.pub ]; then echo '${nonsensitive(local.ssh_credentials_secrets.ssh-public-key)}' > ~/.ssh/id_rsa.pub; chmod 644 ~/.ssh/id_rsa.pub; fi",
+      "if ! grep -q 'BW_EMAIL' ~/.profile; then echo 'export BW_EMAIL=${data.bitwarden_item_login.bitwarden_api_credentials.username}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_MASTER_PASSWORD' ~/.profile; then echo 'export BW_MASTER_PASSWORD=${replace(nonsensitive(data.bitwarden_item_login.bitwarden_api_credentials.password), "$", "\\$")}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_CLIENTID' ~/.profile; then echo 'export BW_CLIENTID=${nonsensitive(local.bw_api_credentials_secrets.client-id)}' >> ~/.profile; fi",
+      "if ! grep -q 'BW_CLIENTSECRET' ~/.profile; then echo 'export BW_CLIENTSECRET=${nonsensitive(local.bw_api_credentials_secrets.client-secret)}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_TENANT_ID' ~/.profile; then echo 'export AZURE_TENANT_ID=${var.azure_state_storage_tenant_id}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_CLIENT_ID' ~/.profile; then echo 'export AZURE_CLIENT_ID=${var.azure_state_storage_client_id}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_CLIENT_SECRET' ~/.profile; then echo 'export AZURE_CLIENT_SECRET=${var.azure_state_storage_client_secret}' >> ~/.profile; fi",
+      "if ! grep -q 'AZURE_SUBSCRIPTION_ID' ~/.profile; then echo 'export AZURE_SUBSCRIPTION_ID=${var.azure_state_storage_subscription_id}' >> ~/.profile; fi",
       "chmod +x /tmp/script.sh",
       "/tmp/script.sh args",
     ]

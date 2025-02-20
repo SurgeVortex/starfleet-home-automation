@@ -19,12 +19,12 @@ DESTROY=${2}
 
 function cleanup {
   echo "Removing Plan File: ${PLAN_FILE}"
-  rm  ${PLAN_FILE}
+  rm -f ${PLAN_FILE}
   echo "Removing Lock File: /tmp/${SCRIPT_NAME}.lock"
-  touch "/tmp/${SCRIPT_NAME}.lock"
+  rm -f "/tmp/${SCRIPT_NAME}.lock"
 }
 
-trap cleanup EXIT
+trap 'cleanup' EXIT
 
 # pre-requisites
 export NVM_DIR="$HOME/.nvm"
@@ -46,7 +46,7 @@ then
     echo "Command bw not found, installing now."
     nvm install --lts
     nvm use --lts
-    npm install -g --registry https://registry.npmjs.org/ @bitwarden/cli 
+    npm install -g --save --registry https://registry.npmjs.org/ @bitwarden/cli 
 fi
 if ! command -v az &> /dev/null
 then

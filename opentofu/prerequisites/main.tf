@@ -18,54 +18,176 @@
 * 
 * * After running this configuration, you should modify the backend configuration in [opentofu/prerequisites/providers.tf] to store the state in the newly created Azure Storage Account and Container.
 * * To destroy the resources and keep the state files sane, you need to first set the state back to local by uncommenting the backend configuration in [opentofu/prerequisites/providers.tf] and initiating the migration by running `terraform init -migrate-state`.
+* 
+* ## Initial Setup Instructions
+* 
+* ### Prerequisites
+* 
+* * An Azure account with sufficient permissions to create resources.
+* * A BitWarden account with an Organization setup.
+* 
+* ### Steps
+* 
+* 1. **Clone the Repository**
+* 
+*    ```sh
+*    git clone https://github.com/your-repo/starfleet-home-automation.git
+*    cd starfleet-home-automation/opentofu/prerequisites
+*    ```
+* 
+* 2. **Configure Azure CLI**
+* 
+*    Ensure you are logged into your Azure account:
+* 
+*    ```sh
+*    az login
+*    ```
+* 
+* 3. **Obtain Required Variables**
+* 
+* You will need the following information to populate the `terraform.tfvars` file:
+* 
+* * `bitwarden_email`: Your BitWarden account email.
+* * `bitwarden_master_password`: Your BitWarden master password.
+* * `bitwarden_client_id`: Your BitWarden client ID.
+* * `bitwarden_client_secret`: Your BitWarden client secret.
+* * `azure_state_storage_account_name`: The name for the Azure Storage Account.
+* * `azure_state_storage_container_name`: The name for the Azure Storage Container.
+* * `azure_state_storage_key`: The key for the state storage.
+* * `azure_state_storage_subscription_id`: Your Azure subscription ID.
+* * `azure_state_storage_tenant_id`: Your Azure tenant ID.
+* * `azure_state_storage_client_id`: Your Azure client ID.
+* * `azure_state_storage_client_secret`: Your Azure client secret.
+* 
+* These values can be obtained from your Azure and BitWarden accounts.
+* 
+* #### How to Obtain These Values:
+* 
+* - **BitWarden Client ID and Secret:**
+*   1. Log in to your BitWarden account.
+*   2. Navigate to the "Settings" page.
+*   3. Under "API Key", generate a new client ID and secret.
+* 
+* - **Azure Subscription ID and Tenant ID:**
+*   1. Log in to the Azure portal.
+*   2. Navigate to "Subscriptions".
+*   3. Select the subscription you want to use.
+*   4. The subscription ID and tenant ID will be displayed on the overview page.
+*   5.  Alternatively, you can use the Azure CLI:
+* 
+* ```sh
+* az account show --query "{subscriptionId:id, tenantId:tenantId}"
+* ```
+* 
+* - **Azure Client ID and Secret:**
+* This will be gotten after the initial run with the backend configuration still commented out. Read steo 6 for more information.
+* 
+* 4. **Populate `terraform.tfvars`**
+* 
+* Create and populate the `terraform.tfvars` file with the obtained values:
+* 
+* ```terraform
+* bitwarden_email                     = "your-email@example.com"
+* bitwarden_master_password           = "your-master-password"
+* bitwarden_client_id                 = "your-client-id"
+* bitwarden_client_secret             = "your-client-secret"
+* azure_state_storage_account_name    = "your-storage-account-name"
+* azure_state_storage_container_name  = "your-container-name"
+* azure_state_storage_key             = "your-state-key"
+* azure_state_storage_subscription_id = "your-subscription-id"
+* azure_state_storage_tenant_id       = "your-tenant-id"
+* azure_state_storage_client_id       = "your-client-id"
+* azure_state_storage_client_secret   = "your-client-secret"
+* ```
+* 
+* 5. **Initialize and Apply Terraform Configuration**
+* 
+* Initialize and apply the Terraform configuration:
+* 
+* ```sh
+* tofu init
+* tofu apply
+* ```
+* 
+* Follow the prompts to confirm the creation of resources.
+* 
+* 6. **Retrieve Client ID and Secret from BitWarden**
+* 
+* After the initial Terraform run, retrieve the client ID and client secret from BitWarden:
+* 
+*   1. Log in to your BitWarden account.
+*   2. Navigate to the "Organization" and find the collection named "AzureSecrets".
+*   3. Locate the item with the name corresponding to the Azure service principal.
+*   4. Copy the `client_id` and `client_secret` values.
+* 
+* Update the `terraform.tfvars` file with these values:
+* 
+* ```terraform
+* azure_state_storage_client_id     = "retrieved-client-id"
+* azure_state_storage_client_secret = "retrieved-client-secret"
+* ```
+* 
+* 7. **Update Backend Configuration**
+* 
+* After the resources are created, update the backend configuration in `providers.tf` to use the newly created Azure Storage Account and Container.
+* 
+* 8. **Migrate State**
+* 
+* Migrate the Terraform state to the new backend:
+* 
+* ```sh
+* terraform init -migrate-state
+* ```
+* 
+* This will move the state files to the Azure Storage Account and Container.
 */
 
-data "bitwarden_organization" "starfleet-organization" {
-  search = var.bitwarden-organization
+data "bitwarden_organization" "starfleet_organization" {
+  search = var.bitwarden_organization
 }
 
 resource "bitwarden_org_collection" "azuresecrets" {
-  name            = "AzureSecrets"
-  organization_id = data.bitwarden_organization.starfleet-organization.id
+  name            = var.bitwarden_org_collection
+  organization_id = data.bitwarden_organization.starfleet_organization.id
 }
 
 data "azuread_client_config" "current" {}
 
 data "azurerm_subscription" "current" {}
 
-resource "azuread_application" "state-storage-service-principal" {
-  display_name = "isonet-casa-terraform-state-storage"
+resource "azuread_application" "state_storage_service_principal" {
+  display_name = var.azure_application_display_name
   owners       = [data.azuread_client_config.current.object_id]
   web {
-    homepage_url = "https://isonet-casa-terraform-state-storage-sp"
+    homepage_url = "https://${var.azure_application_display_name}-sp"
   }
 }
 
-resource "azuread_service_principal" "state-storage-service-principal" {
+resource "azuread_service_principal" "state_storage_service_principal" {
   owners    = [data.azuread_client_config.current.object_id]
-  client_id = azuread_application.state-storage-service-principal.client_id
+  client_id = azuread_application.state_storage_service_principal.client_id
 }
 
-resource "azuread_service_principal_password" "state-storage-service-principal" {
-  service_principal_id = azuread_service_principal.state-storage-service-principal.object_id
+resource "azuread_service_principal_password" "state_storage_service_principal" {
+  service_principal_id = azuread_service_principal.state_storage_service_principal.object_id
 }
 
-resource "bitwarden_item_login" "azure-state-storage-user" {
-  name     = azuread_service_principal.state-storage-service-principal.display_name
-  username = azuread_service_principal.state-storage-service-principal.client_id
-  password = azuread_service_principal_password.state-storage-service-principal.value
+resource "bitwarden_item_login" "azure_state_storage_user" {
+  name     = azuread_service_principal.state_storage_service_principal.display_name
+  username = azuread_service_principal.state_storage_service_principal.client_id
+  password = azuread_service_principal_password.state_storage_service_principal.value
 
-  organization_id = data.bitwarden_organization.starfleet-organization.id
+  organization_id = data.bitwarden_organization.starfleet_organization.id
   collection_ids  = [bitwarden_org_collection.azuresecrets.id]
 
   field {
     name = "object_id"
-    text = azuread_service_principal.state-storage-service-principal.object_id
+    text = azuread_service_principal.state_storage_service_principal.object_id
   }
 
   field {
     name = "client_id"
-    text = azuread_service_principal.state-storage-service-principal.client_id
+    text = azuread_service_principal.state_storage_service_principal.client_id
   }
 
   field {
@@ -74,15 +196,15 @@ resource "bitwarden_item_login" "azure-state-storage-user" {
   }
 }
 
-resource "azurerm_resource_group" "starfleet-home-automation-rg" {
-  name     = "starfleet-home-automation"
-  location = "South Africa North"
+resource "azurerm_resource_group" "starfleet_home_automation_rg" {
+  name     = var.azure_resource_group_name
+  location = var.azure_resource_group_location
 }
 
-resource "azurerm_storage_account" "starfleet-home-automation-storage" {
-  name                            = "starfleethomeautomation"
-  resource_group_name             = azurerm_resource_group.starfleet-home-automation-rg.name
-  location                        = azurerm_resource_group.starfleet-home-automation-rg.location
+resource "azurerm_storage_account" "starfleet_home_automation_storage" {
+  name                            = var.azure_state_storage_account_name
+  resource_group_name             = azurerm_resource_group.starfleet_home_automation_rg.name
+  location                        = azurerm_resource_group.starfleet_home_automation_rg.location
   account_tier                    = "Standard"
   account_replication_type        = "LRS"
   account_kind                    = "StorageV2"
@@ -94,44 +216,43 @@ resource "azurerm_storage_account" "starfleet-home-automation-storage" {
   }
 }
 
-resource "azurerm_storage_container" "starfleet-home-automation-state-storage-container" {
-  name                  = var.azure-state-storage-container-name
-  storage_account_name  = azurerm_storage_account.starfleet-home-automation-storage.name
+resource "azurerm_storage_container" "starfleet_home_automation_state_storage_container" {
+  name                  = var.azure_state_storage_container_name
+  storage_account_name  = azurerm_storage_account.starfleet_home_automation_storage.name
   container_access_type = "private"
 }
 
-
-resource "bitwarden_item_login" "azure-state-storage-container-details" {
-  name     = "${azurerm_storage_container.starfleet-home-automation-state-storage-container.name}-connection-details"
+resource "bitwarden_item_login" "azure_state_storage_container_details" {
+  name     = "${azurerm_storage_container.starfleet_home_automation_state_storage_container.name}-connection-details"
   username = ""
   password = ""
 
-  organization_id = data.bitwarden_organization.starfleet-organization.id
+  organization_id = data.bitwarden_organization.starfleet_organization.id
   collection_ids  = [bitwarden_org_collection.azuresecrets.id]
 
   field {
     name = "id"
-    text = azurerm_storage_container.starfleet-home-automation-state-storage-container.id
+    text = azurerm_storage_container.starfleet_home_automation_state_storage_container.id
   }
 
   field {
     name = "resource_manager_id"
-    text = azurerm_storage_container.starfleet-home-automation-state-storage-container.resource_manager_id
+    text = azurerm_storage_container.starfleet_home_automation_state_storage_container.resource_manager_id
   }
 
   field {
     name = "storage_account_name"
-    text = azurerm_storage_container.starfleet-home-automation-state-storage-container.storage_account_name
+    text = azurerm_storage_container.starfleet_home_automation_state_storage_container.storage_account_name
   }
 
   field {
     name = "storage_container_name"
-    text = azurerm_storage_container.starfleet-home-automation-state-storage-container.name
+    text = azurerm_storage_container.starfleet_home_automation_state_storage_container.name
   }
 
   field {
     name = "resource_group_name"
-    text = azurerm_storage_account.starfleet-home-automation-storage.resource_group_name
+    text = azurerm_storage_account.starfleet_home_automation_storage.resource_group_name
   }
 
   field {
@@ -145,8 +266,18 @@ resource "bitwarden_item_login" "azure-state-storage-container-details" {
   }
 }
 
-resource "azurerm_role_assignment" "state-storage-service-principal-blod-owner" {
-  principal_id         = azuread_service_principal.state-storage-service-principal.object_id
+resource "azuread_group" "state_storage_data_owner_group" {
+  display_name = var.azure_state_data_owner_group
+  members = [
+    azuread_service_principal.state_storage_service_principal.object_id,
+    data.azuread_client_config.current.object_id
+  ]
+  owners           = [data.azuread_client_config.current.object_id]
+  security_enabled = true
+}
+
+resource "azurerm_role_assignment" "state_storage_access_group_blob_owner" {
+  principal_id         = azuread_group.state_storage_data_owner_group.object_id
   role_definition_name = "Storage Blob Data Owner"
-  scope                = azurerm_storage_container.starfleet-home-automation-state-storage-container.resource_manager_id
+  scope                = azurerm_storage_container.starfleet_home_automation_state_storage_container.resource_manager_id
 }

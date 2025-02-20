@@ -1,22 +1,22 @@
-variable "proxmox-credentials-name" {
+variable "proxmox_credentials_name" {
   description = "Credentials to log into Proxmox server."
   type        = string
   default     = "Proxmox Local Admin"
 }
 
-variable "ssh-credentials-name" {
+variable "ssh_credentials_name" {
   description = "Credentials for Proxmox Instances."
   type        = string
   default     = "SSH Credentials"
 }
 
-variable "bitwarden-api-credentials-name" {
+variable "bitwarden_api_credentials_name" {
   description = "Credentials for BitWarden API access."
   type        = string
   default     = "Bitwarden API Credentials"
 }
 
-variable "proxmox-cloud-images" {
+variable "proxmox_cloud_images" {
   description = "Cloud images to download."
   type = map(object({
     content_type = string
@@ -34,7 +34,7 @@ variable "proxmox-cloud-images" {
   }
 }
 
-variable "proxmox-vms" {
+variable "proxmox_vms" {
   description = "Map of VMs"
   default     = {}
   type = map(object({

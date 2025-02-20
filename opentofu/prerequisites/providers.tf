@@ -1,5 +1,5 @@
 terraform {
-  required_version = "1.8.2"
+  required_version = "1.8.6"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -19,14 +19,14 @@ terraform {
     }
   }
   backend "azurerm" {
-    storage_account_name = var.azure-state-storage-account-name
-    container_name       = var.azure-state-storage-container-name
-    key                  = var.azure-state-storage-key
+    storage_account_name = var.azure_state_storage_account_name
+    container_name       = var.azure_state_storage_container_name
+    key                  = var.azure_state_storage_key
     use_azuread_auth     = true
-    subscription_id      = var.azure-state-storage-subscription-id
-    tenant_id            = var.azure-state-storage-tenant-id
-    client_id            = var.azure-state-storage-client-id
-    client_secret        = var.azure-state-storage-client-secret
+    subscription_id      = var.azure_state_storage_subscription_id
+    tenant_id            = var.azure_state_storage_tenant_id
+    client_id            = var.azure_state_storage_client_id
+    client_secret        = var.azure_state_storage_client_secret
   }
 }
 
@@ -34,7 +34,7 @@ provider "azurerm" {
   features {}
   environment         = "Public"
   storage_use_azuread = true
-  subscription_id     = var.azure-state-storage-subscription-id
+  subscription_id     = var.azure_state_storage_subscription_id
 }
 
 provider "azuread" {
@@ -42,8 +42,8 @@ provider "azuread" {
 }
 
 provider "bitwarden" {
-  email           = var.bitwarden-email
-  master_password = var.bitwarden-master-password
-  client_id       = var.bitwarden-client-id
-  client_secret   = var.bitwarden-client-secret
+  email           = var.bitwarden_email
+  master_password = var.bitwarden_master_password
+  client_id       = var.bitwarden_client_id
+  client_secret   = var.bitwarden_client_secret
 }

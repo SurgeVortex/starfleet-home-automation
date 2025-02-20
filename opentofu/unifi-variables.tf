@@ -1,22 +1,22 @@
-variable "unifi-credentials-name" {
+variable "unifi_credentials_name" {
   description = ""
   type        = string
   default     = "Unifi Local Admin"
 }
 
-variable "unifi-api-url" {
+variable "unifi_api_url" {
   description = ""
   type        = string
   default     = "https://unifi/"
 }
 
-variable "unifi-insecure" {
+variable "unifi_insecure" {
   description = ""
   type        = bool
   default     = true
 }
 
-variable "unifi-vlans" {
+variable "unifi_vlans" {
   description = "Map of VLANs"
   type = map(object({
     id                  = number
@@ -59,7 +59,7 @@ variable "unifi-vlans" {
   }
 }
 
-variable "unifi-user-groups" {
+variable "unifi_user_groups" {
   description = "list of unifi user groups"
   type = map(object({
     qos_rate_max_down = number
@@ -73,7 +73,7 @@ variable "unifi-user-groups" {
   }
 }
 
-variable "unifi-trusted-clients" {
+variable "unifi_trusted_clients" {
   description = "Map of trusted clients"
   type = map(object({
     mac          = string
@@ -92,7 +92,7 @@ variable "unifi-trusted-clients" {
   }
 }
 
-variable "unifi-wlans" {
+variable "unifi_wlans" {
   description = "Map of WiFi Configs"
   type = map(object({
     ssid               = string
