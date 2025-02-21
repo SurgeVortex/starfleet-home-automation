@@ -21,3 +21,9 @@ variable "trigger_k3s_install" {
   default     = true
   type        = bool
 }
+
+variable "bitwarden_github_pat_credentials_name" {
+  description = "Credentials for GitHub Personal Access Token."
+  type        = string
+  default     = "GitHub PAT"
+}

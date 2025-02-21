@@ -3,6 +3,10 @@ locals {
   k3s_install_options = "--tls-san=${var.k3s_controlplane_ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik"
 }
 
+data "bitwarden_item_login" "github_pat" {
+  search = var.bitwarden_github_pat_credentials_name
+}
+
 resource "random_password" "k3s_secret" {
   length  = 32
   special = false
@@ -11,10 +15,6 @@ resource "random_password" "k3s_secret" {
 resource "null_resource" "install_k3s" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
   depends_on = [proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"]]
-
-  triggers = {
-    run_always = timestamp()
-  }
 
   connection {
     type        = "ssh"
@@ -34,10 +34,6 @@ resource "null_resource" "install_k3s" {
 resource "null_resource" "install_kubevip" {
   for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
   depends_on = [null_resource.install_k3s]
-
-  triggers = {
-    run_always = timestamp()
-  }
 
   connection {
     type        = "ssh"
@@ -68,10 +64,6 @@ resource "null_resource" "join_k3s_nodes" {
     private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
   }
 
-  triggers = {
-    run_always = timestamp()
-  }
-
   provisioner "remote-exec" {
     inline = [
       "${local.k3s_install_command} ${strcontains(lower(each.value.name), "master") ? "server" : "agent"} --server https://${var.k3s_controlplane_ip}:6443 ${strcontains(lower(each.value.name), "master") ? local.k3s_install_options : ""}",
@@ -94,7 +86,7 @@ resource "null_resource" "install_fluxcd" {
     inline = [
       "kubectl create namespace flux-system || true",
       "curl -s https://fluxcd.io/install.sh | sudo bash",
-      "flux bootstrap github --owner=SurgeVortex --repository=starfleet-home-automation --branch=main --path=flux/clusters/home-lab/flux-system --personal --interval=1m"
+      "export GITHUB_TOKEN=${nonsensitive(data.bitwarden_item_login.github_pat.password)} && flux bootstrap github --owner=SurgeVortex --repository=starfleet-home-automation --branch=main --path=flux/clusters/home-lab/flux-system --personal --interval=1m"
     ]
   }
 }
