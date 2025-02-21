@@ -1,4 +1,5 @@
 #!/bin/bash
+source ~/.profile
 # Get the name of the script
 SCRIPT_NAME=$(basename "$0")
 

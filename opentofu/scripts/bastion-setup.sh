@@ -122,6 +122,7 @@ then
     echo "Creating cron script: $CRON_SCRIPT"
     sudo tee "$CRON_SCRIPT" > /dev/null <<EOL
 #!/bin/bash
+source ~/.profile
 sudo -u $USER bash <<EOF
 cd $WORKING_DIR
 git fetch origin
