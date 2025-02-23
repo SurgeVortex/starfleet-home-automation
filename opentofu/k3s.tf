@@ -1,7 +1,7 @@
 locals {
   k3s_install_command             = "curl -sfL https://get.k3s.io | K3S_TOKEN=${nonsensitive(random_password.k3s_secret.result)} K3S_KUBECONFIG_MODE=${var.k3s_config_mode} sh -s -"
   k3s_install_options             = "--tls-san=${var.k3s_controlplane_ip} --disable-cloud-controller --disable servicelb --disable local-storage  --disable traefik"
-  bitwarden_age_keys_name_secrets = { for field in data.bitwarden_item_login.bitwarden_age_keys_name.field : field.name => field.text }
+  bitwarden_age_keys_name_secrets = { for field in data.bitwarden_item_login.age_keys.field : field.name => field.text }
 }
 
 data "bitwarden_item_login" "github_pat" {
