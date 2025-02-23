@@ -27,3 +27,22 @@ variable "bitwarden_github_pat_credentials_name" {
   type        = string
   default     = "GitHub PAT"
 }
+
+variable "bitwarden_age_keys_name" {
+  description = "Credentials for age keys."
+  type        = string
+  default     = "Age Keys"
+
+}
+
+variable "k3s_cluster_name" {
+  description = "The name of the K3s cluster"
+  type        = string
+  default     = "starfleet-cluster"
+}
+
+variable "k3s_context_name" {
+  description = "The name of the K3s context"
+  type        = string
+  default     = "starfleet-context"
+}

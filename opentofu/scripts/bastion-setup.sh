@@ -83,6 +83,39 @@ then
     sudo NEEDRESTART_MODE=a apt-get install -y logrotate
 fi
 
+# Ensure git is installed
+if ! command_exists git
+then
+    echo "git not found, installing now."
+    sudo apt-get update
+    apt-get install -y git
+fi
+
+# Ensure kubectl is installed
+if ! command_exists kubectl
+then
+    echo "kubectl not found, installing now."
+    sudo apt update
+    sudo apt install -y apt-transport-https ca-certificates curl
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /usr/share/keyrings/kubernetes-archive-keyring.gpg >/dev/null
+    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://packages.cloud.google.com/apt kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    sudo apt update
+    sudo apt install -y kubectl
+fi
+
+# Ensure helm is installed
+if ! command_exists helm
+then
+    echo "helm not found, installing now."
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list   # helps tools such as command-not-found to work correctly
+    sudo apt-get update
+    sudo apt-get install -y kubectl
+fi
+
 # Ensure log files are created and owned by the current user
 if [ ! -f "$TOFU_LOG" ] || [ "$(stat -c %U "$TOFU_LOG")" != "$USER" ]
 then
