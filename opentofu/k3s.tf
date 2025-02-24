@@ -35,9 +35,29 @@ resource "null_resource" "install_k3s" {
   }
 }
 
+resource "null_resource" "install_kubevip" {
+  for_each   = try(proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
+  depends_on = [null_resource.copy_kubeconfig]
+  connection {
+    type        = "ssh"
+    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = nonsensitive(data.bitwarden_item_login.ssh_credentials.username)
+    private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "kubectl apply -f https://kube-vip.io/manifests/rbac.yaml",
+      "sudo ctr image pull ghcr.io/kube-vip/kube-vip:latest; sudo ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:latest vip /kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s_controlplane_ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
+      "kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml",
+      "kubectl get configmap -n kube-system kubevip || kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s_loadbalancer_ip_range}"
+    ]
+  }
+}
+
 resource "null_resource" "copy_kubeconfig" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
-  depends_on = [null_resource.install_k3s]
+  depends_on = [null_resource.install_kubevip]
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
@@ -69,26 +89,6 @@ resource "null_resource" "kubernetes_secret_age_keys" {
     inline = [
       "kubectl create ns flux-system",
       "kubectl create secret generic sops-age --namespace=flux-system --from-literal=age.agekey=$(echo ${local.bitwarden_age_keys_name_secrets.private-key} | base64)"
-    ]
-  }
-}
-
-resource "null_resource" "install_kubevip" {
-  for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
-  depends_on = [null_resource.copy_kubeconfig]
-  connection {
-    type        = "ssh"
-    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
-    user        = nonsensitive(data.bitwarden_item_login.ssh_credentials.username)
-    private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "kubectl apply -f https://kube-vip.io/manifests/rbac.yaml",
-      "sudo ctr image pull ghcr.io/kube-vip/kube-vip:latest; sudo ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:latest vip /kube-vip manifest daemonset --arp --interface eth0 --address ${var.k3s_controlplane_ip} --controlplane --inCluster --taint --leaderElection --services  | kubectl apply -f -",
-      "kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml",
-      "kubectl get configmap -n kube-system kubevip || kubectl create configmap -n kube-system kubevip --from-literal range-global=${var.k3s_loadbalancer_ip_range}"
     ]
   }
 }
@@ -125,7 +125,7 @@ resource "null_resource" "install_fluxcd" {
     inline = [
       "kubectl create namespace flux-system || true",
       "curl -s https://fluxcd.io/install.sh | sudo bash",
-      "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml && export GITHUB_TOKEN=${nonsensitive(data.bitwarden_item_login.github_pat.password)} && flux bootstrap github --owner=SurgeVortex --repository=starfleet-home-automation --branch=main --path=flux/clusters/isonet/flux-system --personal --interval=1m"
+      "export GITHUB_TOKEN=${nonsensitive(data.bitwarden_item_login.github_pat.password)} && flux bootstrap github --owner=SurgeVortex --repository=starfleet-home-automation --branch=main --path=flux/clusters/isonet/flux-system --personal --interval=1m"
     ]
   }
 }
