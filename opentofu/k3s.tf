@@ -8,7 +8,7 @@ data "bitwarden_item_login" "github_pat" {
   search = var.bitwarden_github_pat_credentials_name
 }
 
-data "bitwarden_item_login" "age_keys" {
+data "bitwarden_item_secure_note" "age_keys" {
   search = var.bitwarden_age_keys_name
 }
 
