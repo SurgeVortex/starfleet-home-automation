@@ -89,8 +89,8 @@ resource "null_resource" "kubernetes_secret_age_keys" {
   provisioner "remote-exec" {
     inline = [
       "kubectl create ns flux-system",
-      "echo \"kubectl --namespace=flux-system create secret generic sops-age --from-literal=age.agekey=$(echo ${nonsensitive(local.bitwarden_age_keys_name_secrets.private-key)} | base64)\"",
-      "kubectl --namespace=flux-system create secret generic sops-age --from-literal=age.agekey=$(echo ${nonsensitive(local.bitwarden_age_keys_name_secrets.private-key)} | base64)"
+      "echo \"kubectl --namespace=flux-system create secret generic sops-age --from-literal=age.agekey=${nonsensitive(local.bitwarden_age_keys_name_secrets.private-key)}\"",
+      "kubectl --namespace=flux-system create secret generic sops-age --from-literal=age.agekey=${nonsensitive(local.bitwarden_age_keys_name_secrets.private-key)}"
     ]
   }
 }
