@@ -37,7 +37,7 @@ resource "null_resource" "install_k3s" {
 
 resource "null_resource" "install_kubevip" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
-  depends_on = [null_resource.copy_kubeconfig]
+  depends_on = [null_resource.install_k3s]
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
