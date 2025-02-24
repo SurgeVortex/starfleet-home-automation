@@ -50,29 +50,35 @@ resource "null_resource" "copy_kubeconfig" {
       "scp -o StrictHostKeyChecking=no ${nonsensitive(data.bitwarden_item_login.ssh_credentials.username)}@${split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]}:/etc/rancher/k3s/k3s.yaml /tmp/k3s.yaml",
       "mkdir -p ~/.kube",
       "mv /tmp/k3s.yaml ~/.kube/config",
+      "sed -i 's/127.0.0.1/${var.k3s_controlplane_ip}/g' ~/.kube/config",
     ]
   }
 }
 
-# Create kubernetes secret for age private key using kubernetes provider
-resource "kubernetes_secret" "age_keys" {
-  metadata {
-    name = "sops-age"
-    namespace = "flux-system"
+resource "null_resource" "kubernetes_secret_age_keys" {
+  for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
+  depends_on = [null_resource.copy_kubeconfig]
+  connection {
+    type        = "ssh"
+    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = nonsensitive(data.bitwarden_item_login.ssh_credentials.username)
+    private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
   }
-  data = {
-    "age.agekey" = base64encode(local.bitwarden_age_keys_name_secrets.private-key)
+
+  provisioner "remote-exec" {
+    inline = [
+      "kubectl create ns flux-system",
+      "kubectl create secret generic sops-age --namespace=flux-system --from-literal=age.agekey=$(echo ${local.bitwarden_age_keys_name_secrets.private-key} | base64)"
+    ]
   }
 }
 
-
 resource "null_resource" "install_kubevip" {
-  for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
-  depends_on = [null_resource.install_k3s]
-
+  for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
+  depends_on = [null_resource.copy_kubeconfig]
   connection {
     type        = "ssh"
-    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
     user        = nonsensitive(data.bitwarden_item_login.ssh_credentials.username)
     private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
   }
@@ -106,16 +112,11 @@ resource "null_resource" "join_k3s_nodes" {
 }
 
 resource "null_resource" "install_fluxcd" {
-  for_each   = try(null_resource.install_k3s["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
-  depends_on = [null_resource.install_k3s]
-
-  triggers = {
-    always_run = timestamp()
-  }
-
+  for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
+  depends_on = [null_resource.copy_kubeconfig]
   connection {
     type        = "ssh"
-    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+    host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
     user        = nonsensitive(data.bitwarden_item_login.ssh_credentials.username)
     private_key = nonsensitive(data.bitwarden_item_login.ssh_credentials.notes)
   }
