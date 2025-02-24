@@ -61,7 +61,7 @@ resource "kubernetes_secret" "age_keys" {
     namespace = "flux-system"
   }
   data = {
-    "age.agekey" = base64encode(local.bitwarden_age_keys_name_secrets.private_key)
+    "age.agekey" = base64encode(local.bitwarden_age_keys_name_secrets.private-key)
   }
 }
 

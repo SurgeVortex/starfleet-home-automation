@@ -32,7 +32,6 @@ variable "bitwarden_age_keys_name" {
   description = "Credentials for age keys."
   type        = string
   default     = "Age Keys"
-
 }
 
 variable "k3s_cluster_name" {
