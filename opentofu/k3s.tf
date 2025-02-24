@@ -58,6 +58,11 @@ resource "null_resource" "install_kubevip" {
 resource "null_resource" "copy_kubeconfig" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
   depends_on = [null_resource.install_kubevip]
+
+  triggers = {
+    always_run = timestamp()
+  }
+
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
@@ -88,7 +93,7 @@ resource "null_resource" "kubernetes_secret_age_keys" {
   provisioner "remote-exec" {
     inline = [
       "kubectl create ns flux-system",
-      "kubectl create secret generic sops-age --namespace=flux-system --from-literal=age.agekey=$(echo ${local.bitwarden_age_keys_name_secrets.private-key} | base64)"
+      "kubectl create secret generic sops-age --namespace=flux-system --from-literal=age.agekey=$(echo ${nonsensitive(local.bitwarden_age_keys_name_secrets.private-key)} | base64)"
     ]
   }
 }
