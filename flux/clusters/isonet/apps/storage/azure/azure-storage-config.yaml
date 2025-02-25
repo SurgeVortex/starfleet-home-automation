@@ -1,8 +1,0 @@
-# Sample configuration for connecting to an Azure Storage Account.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: azure-storage-config
-data:
-  # Put your Azure Storage configuration here.
-  connectionString: "<your-azure-storage-connection-string>"
