@@ -18,6 +18,18 @@ variable "bitwarden_client_secret" {
   type        = string
 }
 
+variable "bitwarden_org_collection" {
+  description = "BitWarden Collection that secrets live in"
+  type        = string
+  default     = "AzureSecrets"
+}
+
+variable "bitwarden_organization" {
+  description = "BitWarden Organization that secrets live in"
+  type        = string
+  default     = "starfleet-home-automation"
+}
+
 variable "azure_state_storage_account_name" {
   description = "Storage Account name that contains the container to store state files in."
   type        = string

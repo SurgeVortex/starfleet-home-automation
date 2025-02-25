@@ -1,3 +1,18 @@
+data "azurerm_subscription" "current" {
+}
+
+data "azuread_client_config" "current" {
+}
+
+data "bitwarden_organization" "starfleet_organization" {
+  search = var.bitwarden_organization
+}
+
+data "bitwarden_org_collection" "azuresecrets" {
+  search          = var.bitwarden_org_collection
+  organization_id = data.bitwarden_organization.starfleet_organization.id
+}
+
 resource "azuread_application" "longhorn_backup_service_principal" {
   display_name = var.azure_application_longhorn_backup_display_name
   owners       = [data.azuread_client_config.current.object_id]
@@ -21,7 +36,7 @@ resource "bitwarden_item_login" "azure_longhorn_backup_user" {
   password = azuread_service_principal_password.longhorn_backup_service_principal.value
 
   organization_id = data.bitwarden_organization.starfleet_organization.id
-  collection_ids  = [bitwarden_org_collection.azuresecrets.id]
+  collection_ids  = [data.bitwarden_org_collection.azuresecrets.id]
 
   field {
     name = "object_id"
@@ -51,7 +66,7 @@ resource "bitwarden_item_login" "azure_longhorn_backup_container_details" {
   password = ""
 
   organization_id = data.bitwarden_organization.starfleet_organization.id
-  collection_ids  = [bitwarden_org_collection.azuresecrets.id]
+  collection_ids  = [data.bitwarden_org_collection.azuresecrets.id]
 
   field {
     name = "id"
@@ -75,7 +90,7 @@ resource "bitwarden_item_login" "azure_longhorn_backup_container_details" {
 
   field {
     name = "resource_group_name"
-    text = azurerm_storage_account.starfleet_home_automation_storage.resource_group_name
+    text = var.azure_state_storage_account_name
   }
 
   field {
