@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: flux/infrastructure/configs/storage/azure_storage_account_keys
+  path: flux/infrastructure/configs/storage/azure_storage_account_keys/azure_storage_account_secret.yaml
   prune: true
   sourceRef:
     kind: GitRepository
