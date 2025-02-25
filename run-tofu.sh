@@ -67,6 +67,16 @@ fi
 
 cd "${OPENTOFU_DIR}"
 
+if [ "$1" == "unlock" ]; then
+    LOCK_ID=$2
+    if [ -z "${LOCK_ID}" ]; then
+        echo "Lock ID is required for unlock operation."
+        exit 1
+    fi
+    tofu force-unlock -force ${LOCK_ID}
+    exit 0
+fi
+
 tofu init -upgrade
 TYPE="apply"
 if [ "$(echo ${1} | tr '[:upper:]' '[:lower:]')" == "destroy" ]
