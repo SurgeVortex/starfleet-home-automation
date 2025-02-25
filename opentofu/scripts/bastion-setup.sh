@@ -92,16 +92,16 @@ then
 fi
 
 # Ensure kubectl is installed
-if ! command_exists kubectl
-then
-    echo "kubectl not found, installing now."
-    sudo apt update
-    sudo apt install -y apt-transport-https ca-certificates curl
-    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /usr/share/keyrings/kubernetes-archive-keyring.gpg >/dev/null
-    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://packages.cloud.google.com/apt kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-    sudo apt update
-    sudo apt install -y kubectl
-fi
+# if ! command_exists kubectl
+# then
+#     echo "kubectl not found, installing now."
+#     sudo apt update
+#     sudo apt install -y apt-transport-https ca-certificates curl
+#     curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /usr/share/keyrings/kubernetes-archive-keyring.gpg >/dev/null
+#     echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://packages.cloud.google.com/apt kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+#     sudo apt update
+#     sudo apt install -y kubectl
+# fi
 
 # # Ensure helm is installed
 # if ! command_exists helm

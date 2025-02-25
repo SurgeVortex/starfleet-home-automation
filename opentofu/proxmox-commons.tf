@@ -139,6 +139,7 @@ resource "null_resource" "setup_bastion" {
   triggers = {
     script_checksum = md5(file("${path.module}/scripts/bastion-setup.sh"))
   }
+  
   provisioner "file" {
     source      = "${path.module}/scripts/bastion-setup.sh"
     destination = "/tmp/script.sh"
