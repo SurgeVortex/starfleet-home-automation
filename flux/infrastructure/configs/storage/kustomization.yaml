@@ -5,12 +5,11 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: flux/infrastructure/configs/storage/azure_storage_account_keys/azure_storage_account_secret.yaml
+  path: flux/infrastructure/configs/storage/azure_storage_account_keys/
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
-  # Decryption configuration starts here
   decryption:
     provider: sops
     secretRef:
