@@ -52,3 +52,15 @@ variable "azure_state_storage_client_secret" {
   description = "Subscription containig the Azure Storage Container to store the state files in."
   type        = string
 }
+
+variable "azure_application_longhorn_backup_display_name" {
+  description = "Display name for the Azure Application used for Longhorn backup."
+  type        = string
+  default     = "lognhorn-backup-sp"
+}
+
+variable "azure_longhorn_backup_container_name" {
+  description = "Name of the Azure Storage Container to store Longhorn backups in."
+  type        = string
+  default     = "longhorn-backups"
+}
