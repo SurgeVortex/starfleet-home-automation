@@ -41,7 +41,7 @@ resource "bitwarden_item_login" "azure_longhorn_backup_user" {
 
 resource "azurerm_storage_container" "starfleet_home_automation_longhorn_backup_container" {
   name                  = var.azure_longhorn_backup_container_name
-  storage_account_name  = azurerm_storage_account.starfleet_home_automation_storage.name
+  storage_account_name  = var.azure_state_storage_account_name
   container_access_type = "private"
 }
 
