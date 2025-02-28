@@ -135,6 +135,7 @@ resource "unifi_user" "servers" {
 }
 
 data "unifi_ap_group" "default" {
+  name = "default"
 }
 
 resource "unifi_wlan" "wifi" {
