@@ -76,3 +76,13 @@ variable "azure_longhorn_backup_container_name" {
   type        = string
   default     = "longhorn-backups"
 }
+
+variable "terraform_sp_client_id" {
+  description = "Client ID of the Terraform service principal."
+  type        = string
+}
+
+variable "terraform_sp_client_secret" {
+  description = "Client Secret of the Terraform service principal."
+  type        = string
+}

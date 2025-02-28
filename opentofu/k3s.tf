@@ -38,7 +38,7 @@ resource "null_resource" "install_k3s" {
 resource "null_resource" "install_kubevip" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"] != null ? toset(["k8s-master-1"]) : toset([]), toset([]))
   depends_on = [null_resource.install_k3s]
-  
+
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["k8s-master-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
@@ -58,7 +58,7 @@ resource "null_resource" "install_kubevip" {
 
 resource "null_resource" "copy_kubeconfig" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
-  depends_on = [null_resource.install_kubevip]  
+  depends_on = [null_resource.install_kubevip]
 
   connection {
     type        = "ssh"
@@ -80,7 +80,7 @@ resource "null_resource" "copy_kubeconfig" {
 resource "null_resource" "kubernetes_secret_age_keys" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
   depends_on = [null_resource.copy_kubeconfig]
-  
+
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]
@@ -118,7 +118,7 @@ resource "null_resource" "join_k3s_nodes" {
 resource "null_resource" "install_fluxcd" {
   for_each   = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? toset(["bastion"]) : toset([]), toset([]))
   depends_on = [null_resource.copy_kubeconfig]
-  
+
   connection {
     type        = "ssh"
     host        = split("/", proxmox_virtual_environment_vm.virtual_machines["bastion"].initialization[0].ip_config[0].ipv4[0].address)[0]

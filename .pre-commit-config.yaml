@@ -3,8 +3,12 @@ repos:
   rev: v1.0.2 # Get the latest from: https://github.com/tofuutils/pre-commit-opentofu/releases
   hooks:
     - id: tofu_fmt
+      files: ^(opentofu|opentofu/prerequisites)/
     - id: tofu_docs
-    - id: tofu_fmt
+      files: ^(opentofu|opentofu/prerequisites)/
     - id: tofu_tflint
+      files: ^(opentofu|opentofu/prerequisites)/
     - id: tofu_trivy
+      files: ^(opentofu|opentofu/prerequisites)/
     - id: tofu_validate
+      files: ^(opentofu|opentofu/prerequisites)/

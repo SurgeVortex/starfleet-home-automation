@@ -79,7 +79,7 @@ az account show --query "{subscriptionId:id, tenantId:tenantId}"
 ```
 
 - **Azure Client ID and Secret:**
-This will be gotten after the initial run with the backend configuration still commented out. Read steo 6 for more information.
+This will be gotten after the initial run with the backend configuration still commented out. Read step 6 for more information.
 
 4. **Populate `terraform.tfvars`**
 

@@ -16,12 +16,6 @@ variable "k3s_config_mode" {
   type        = string
 }
 
-variable "trigger_k3s_install" {
-  description = "Trigger the installation of K3s"
-  default     = true
-  type        = bool
-}
-
 variable "bitwarden_github_pat_credentials_name" {
   description = "Credentials for GitHub Personal Access Token."
   type        = string
@@ -32,16 +26,4 @@ variable "bitwarden_age_keys_name" {
   description = "Credentials for age keys."
   type        = string
   default     = "Age Keys"
-}
-
-variable "k3s_cluster_name" {
-  description = "The name of the K3s cluster"
-  type        = string
-  default     = "starfleet-cluster"
-}
-
-variable "k3s_context_name" {
-  description = "The name of the K3s context"
-  type        = string
-  default     = "starfleet-context"
 }

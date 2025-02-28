@@ -1,5 +1,5 @@
 terraform {
-  required_version = "1.8.6"
+  required_version = "1.9.0"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -19,7 +19,7 @@ terraform {
     }
   }
   backend "azurerm" {
-    storage_account_name = var.azure_state_storage_account_name
+    storage_account_name = var.azure_general_storage_account_name
     container_name       = var.azure_state_storage_container_name
     key                  = var.azure_state_storage_key
     use_azuread_auth     = true
@@ -35,6 +35,10 @@ provider "azurerm" {
   environment         = "Public"
   storage_use_azuread = true
   subscription_id     = var.azure_state_storage_subscription_id
+  # Comment these out until the service principal is created
+  client_id     = var.terraform_sp_client_id
+  client_secret = var.terraform_sp_client_secret
+  tenant_id     = var.azure_state_storage_tenant_id
 }
 
 provider "azuread" {

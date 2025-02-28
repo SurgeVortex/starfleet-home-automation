@@ -47,6 +47,9 @@ provider "azurerm" {
   environment         = "Public"
   storage_use_azuread = true
   subscription_id     = var.azure_state_storage_subscription_id
+  client_id           = var.terraform_sp_client_id
+  client_secret       = var.terraform_sp_client_secret
+  tenant_id           = var.azure_state_storage_tenant_id
 }
 
 provider "azuread" {

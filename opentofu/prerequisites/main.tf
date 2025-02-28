@@ -146,8 +146,8 @@ data "bitwarden_organization" "starfleet_organization" {
   search = var.bitwarden_organization
 }
 
-resource "bitwarden_org_collection" "azuresecrets" {
-  name            = var.bitwarden_org_collection
+data "bitwarden_org_collection" "azuresecrets" {
+  search          = var.bitwarden_org_collection
   organization_id = data.bitwarden_organization.starfleet_organization.id
 }
 
@@ -155,54 +155,13 @@ data "azuread_client_config" "current" {}
 
 data "azurerm_subscription" "current" {}
 
-resource "azuread_application" "state_storage_service_principal" {
-  display_name = var.azure_application_display_name
-  owners       = [data.azuread_client_config.current.object_id]
-  web {
-    homepage_url = "https://${var.azure_application_display_name}-sp"
-  }
-}
-
-resource "azuread_service_principal" "state_storage_service_principal" {
-  owners    = [data.azuread_client_config.current.object_id]
-  client_id = azuread_application.state_storage_service_principal.client_id
-}
-
-resource "azuread_service_principal_password" "state_storage_service_principal" {
-  service_principal_id = azuread_service_principal.state_storage_service_principal.object_id
-}
-
-resource "bitwarden_item_login" "azure_state_storage_user" {
-  name     = azuread_service_principal.state_storage_service_principal.display_name
-  username = azuread_service_principal.state_storage_service_principal.client_id
-  password = azuread_service_principal_password.state_storage_service_principal.value
-
-  organization_id = data.bitwarden_organization.starfleet_organization.id
-  collection_ids  = [bitwarden_org_collection.azuresecrets.id]
-
-  field {
-    name = "object_id"
-    text = azuread_service_principal.state_storage_service_principal.object_id
-  }
-
-  field {
-    name = "client_id"
-    text = azuread_service_principal.state_storage_service_principal.client_id
-  }
-
-  field {
-    name = "tenant_id"
-    text = data.azuread_client_config.current.tenant_id
-  }
-}
-
 resource "azurerm_resource_group" "starfleet_home_automation_rg" {
   name     = var.azure_resource_group_name
   location = var.azure_resource_group_location
 }
 
-resource "azurerm_storage_account" "starfleet_home_automation_storage" {
-  name                            = var.azure_state_storage_account_name
+resource "azurerm_storage_account" "starfleet_general_storage" {
+  name                            = var.azure_general_storage_account_name
   resource_group_name             = azurerm_resource_group.starfleet_home_automation_rg.name
   location                        = azurerm_resource_group.starfleet_home_automation_rg.location
   account_tier                    = "Standard"
@@ -218,7 +177,7 @@ resource "azurerm_storage_account" "starfleet_home_automation_storage" {
 
 resource "azurerm_storage_container" "starfleet_home_automation_state_storage_container" {
   name                  = var.azure_state_storage_container_name
-  storage_account_name  = azurerm_storage_account.starfleet_home_automation_storage.name
+  storage_account_name  = azurerm_storage_account.starfleet_general_storage.name
   container_access_type = "private"
 }
 
@@ -228,7 +187,7 @@ resource "bitwarden_item_login" "azure_state_storage_container_details" {
   password = ""
 
   organization_id = data.bitwarden_organization.starfleet_organization.id
-  collection_ids  = [bitwarden_org_collection.azuresecrets.id]
+  collection_ids  = [data.bitwarden_org_collection.azuresecrets.id]
 
   field {
     name = "id"
@@ -252,7 +211,7 @@ resource "bitwarden_item_login" "azure_state_storage_container_details" {
 
   field {
     name = "resource_group_name"
-    text = azurerm_storage_account.starfleet_home_automation_storage.resource_group_name
+    text = azurerm_storage_account.starfleet_general_storage.resource_group_name
   }
 
   field {
@@ -266,18 +225,136 @@ resource "bitwarden_item_login" "azure_state_storage_container_details" {
   }
 }
 
-resource "azuread_group" "state_storage_data_owner_group" {
-  display_name = var.azure_state_data_owner_group
+// Create groups for different access levels
+resource "azuread_group" "subscription_owner_group" {
+  display_name = var.azure_subscription_owner_group
   members = [
-    azuread_service_principal.state_storage_service_principal.object_id,
+    azuread_service_principal.terraform_sp.object_id,
     data.azuread_client_config.current.object_id
   ]
   owners           = [data.azuread_client_config.current.object_id]
   security_enabled = true
 }
 
+resource "azuread_group" "storage_account_owner_group" {
+  display_name = var.azure_storage_account_owner_group
+  members = [
+    azuread_service_principal.terraform_sp.object_id,
+    data.azuread_client_config.current.object_id
+  ]
+  owners           = [data.azuread_client_config.current.object_id]
+  security_enabled = true
+}
+
+resource "azuread_group" "state_container_data_owner_group" {
+  display_name = var.state_container_data_owner_group
+  members = [
+    azuread_service_principal.state_storage_sp.object_id,
+    data.azuread_client_config.current.object_id
+  ]
+  owners           = [data.azuread_client_config.current.object_id]
+  security_enabled = true
+}
+
+// Create service principals
+resource "azuread_application" "state_storage_sp" {
+  display_name = var.state_storage_sp_display_name
+  owners       = [data.azuread_client_config.current.object_id]
+  web {
+    homepage_url = "https://${var.state_storage_sp_display_name}-sp"
+  }
+}
+
+resource "azuread_service_principal" "state_storage_sp" {
+  owners    = [data.azuread_client_config.current.object_id]
+  client_id = azuread_application.state_storage_sp.client_id
+}
+
+resource "azuread_service_principal_password" "state_storage_sp" {
+  service_principal_id = azuread_service_principal.state_storage_sp.object_id
+}
+
+resource "azuread_application" "terraform_sp" {
+  display_name = var.terraform_sp_display_name
+  owners       = [data.azuread_client_config.current.object_id]
+  web {
+    homepage_url = "https://${var.terraform_sp_display_name}-sp"
+  }
+}
+
+resource "azuread_service_principal" "terraform_sp" {
+  owners    = [data.azuread_client_config.current.object_id]
+  client_id = azuread_application.terraform_sp.client_id
+}
+
+resource "azuread_service_principal_password" "terraform_sp" {
+  service_principal_id = azuread_service_principal.terraform_sp.object_id
+}
+
+// Assign roles to groups
 resource "azurerm_role_assignment" "state_storage_access_group_blob_owner" {
-  principal_id         = azuread_group.state_storage_data_owner_group.object_id
+  principal_id         = azuread_group.state_container_data_owner_group.object_id
   role_definition_name = "Storage Blob Data Owner"
   scope                = azurerm_storage_container.starfleet_home_automation_state_storage_container.resource_manager_id
+}
+
+resource "azurerm_role_assignment" "subscription_owner_role" {
+  principal_id         = azuread_group.subscription_owner_group.object_id
+  role_definition_name = "Owner"
+  scope                = data.azurerm_subscription.current.id
+}
+
+resource "azurerm_role_assignment" "storage_account_owner_role" {
+  principal_id         = azuread_group.storage_account_owner_group.object_id
+  role_definition_name = "Storage Account Contributor"
+  scope                = azurerm_storage_account.starfleet_general_storage.id
+}
+
+// Update BitWarden secrets
+resource "bitwarden_item_login" "azure_state_storage_user" {
+  name     = azuread_service_principal.state_storage_sp.display_name
+  username = azuread_service_principal.state_storage_sp.client_id
+  password = azuread_service_principal_password.state_storage_sp.value
+
+  organization_id = data.bitwarden_organization.starfleet_organization.id
+  collection_ids  = [data.bitwarden_org_collection.azuresecrets.id]
+
+  field {
+    name = "object_id"
+    text = azuread_service_principal.state_storage_sp.object_id
+  }
+
+  field {
+    name = "client_id"
+    text = azuread_service_principal.state_storage_sp.client_id
+  }
+
+  field {
+    name = "tenant_id"
+    text = data.azuread_client_config.current.tenant_id
+  }
+}
+
+resource "bitwarden_item_login" "terraform_user" {
+  name     = azuread_service_principal.terraform_sp.display_name
+  username = azuread_service_principal.terraform_sp.client_id
+  password = azuread_service_principal_password.terraform_sp.value
+
+  organization_id = data.bitwarden_organization.starfleet_organization.id
+  collection_ids  = [data.bitwarden_org_collection.azuresecrets.id]
+
+  field {
+    name = "object_id"
+    text = azuread_service_principal.terraform_sp.object_id
+  }
+
+  field {
+    name = "client_id"
+    text = azuread_service_principal.terraform_sp.client_id
+  }
+
+  field {
+    name = "tenant_id"
+    text = data.azuread_client_config.current.tenant_id
+  }
 }
