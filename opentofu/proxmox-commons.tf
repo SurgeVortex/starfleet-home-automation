@@ -26,7 +26,7 @@ resource "proxmox_virtual_environment_download_file" "cloud_images" {
   content_type = each.value.content_type
   datastore_id = each.value.datastore_id
   node_name    = each.value.node_name
-  file_name    = "${each.key}.img"
+  file_name    = each.value.file_name
   url          = each.value.url
 }
 
@@ -37,8 +37,8 @@ resource "proxmox_virtual_environment_vm" "virtual_machines" {
   bios      = try(each.value.bios, "seabios")
   cpu {
     architecture = try(each.value.cpu.architecture, "x86_64")
-    cores        = 4
-    sockets      = 1
+    cores        = try(each.value.cpu.cores, 4)
+    sockets      = try(each.value.cpu.sockets, 1)
   }
   description = each.value.description
   dynamic "disk" {
@@ -127,6 +127,81 @@ resource "proxmox_virtual_environment_vm" "virtual_machines" {
   vm_id = each.value.vm_id
 }
 
+resource "proxmox_virtual_environment_container" "containers" {
+  for_each  = var.proxmox_containers
+  node_name = each.value.node_name
+  vm_id     = each.value.vm_id
+
+  cpu {
+    architecture = try(each.value.cpu.architecture, "amd64")
+    cores        = try(each.value.cpu.cores, 1)
+  }
+
+  description = each.value.description
+
+  disk {
+    datastore_id = try(each.value.disk.datastore_id, "local")
+    size         = try(each.value.disk.size, 4)
+  }
+
+  dynamic "initialization" {
+    for_each = each.value.initialization != null ? { init = true } : each.value.is_cloud_init ? { cloud_init = true } : {}
+    content {
+      dynamic "dns" {
+        for_each = try(each.value.initialization.dns != null ? each.value.initialization : [], [])
+        content {
+          domain  = try(each.value.initialization.dns.domain, null)
+          servers = try(each.value.initialization.dns.servers, [])
+        }
+      }
+      hostname = try(each.value.initialization.hostname, null)
+      ip_config {
+        ipv4 {
+          address = try(each.value.initialization.ip_config.ipv4.address, null)
+          gateway = try(each.value.initialization.ip_config.ipv4.gateway, null)
+        }
+      }
+      dynamic "user_account" {
+        for_each = each.value.is_cloud_init ? ["cloud_init"] : each.value.initialization.user_account != null ? ["user_account"] : []
+        content {
+          keys     = try(each.value.initialization.user_account.keys, [])
+          password = try(each.value.initialization.user_account.password, null)
+        }
+      }
+    }
+  }
+
+  memory {
+    dedicated = try(each.value.memory.dedicated, 512)
+    swap      = try(each.value.memory.swap, 0)
+  }
+
+  dynamic "network_interface" {
+    for_each = each.value.network_interface
+    content {
+      bridge  = try(network_interface.value.bridge, "vmbr0")
+      name    = network_interface.value.name
+      vlan_id = try(network_interface.value.vlan_id, null)
+    }
+  }
+
+  operating_system {
+    template_file_id = each.value.operating_system.template_file_id
+  }
+
+  pool_id       = each.value.pool_id
+  started       = try(each.value.started, true)
+  start_on_boot = try(each.value.start_on_boot, true)
+  unprivileged  = try(each.value.unprivileged, false)
+
+  dynamic "startup" {
+    for_each = each.value.startup != null ? [each.value.startup] : []
+    content {
+      order = startup.value.order
+    }
+  }
+}
+
 resource "null_resource" "setup_bastion" {
   for_each = try(proxmox_virtual_environment_vm.virtual_machines["bastion"] != null ? { bastion : "bastion" } : {}, {})
   connection {
@@ -162,3 +237,5 @@ resource "null_resource" "setup_bastion" {
     ]
   }
 }
+
+

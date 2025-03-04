@@ -23,19 +23,21 @@ variable "proxmox_cloud_images" {
     datastore_id = string
     node_name    = string
     url          = string
+    file_name    = string
   }))
   default = {
     "ubuntu_cloud_image" = {
       content_type = "iso"
       datastore_id = "local"
       node_name    = "pve-1"
+      file_name    = "jammy-server-cloudimg-amd64.img"
       url          = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
     }
   }
 }
 
 variable "proxmox_vms" {
-  description = "Map of VMs"
+  description = "Map of Proxmox VMs"
   default     = {}
   type = map(object({
     bios = optional(string)
@@ -105,5 +107,59 @@ variable "proxmox_vms" {
       order = number
     }))
     vm_id = number
+  }))
+}
+
+variable "proxmox_containers" {
+  description = "Map of Proxmox containers"
+  default     = {}
+  type = map(object({
+    node_name = string
+    vm_id     = number
+    cpu = optional(object({
+      architecture = optional(string, "amd64")
+      cores        = optional(number, 1)
+    }))
+    description = optional(string)
+    disk = optional(object({
+      datastore_id = optional(string, "local")
+      size         = optional(number, 4)
+    }))
+    initialization = optional(object({
+      dns = optional(object({
+        domain  = optional(string)
+        servers = optional(list(string))
+      }))
+      hostname = optional(string)
+      ip_config = optional(object({
+        ipv4 = optional(object({
+          address = optional(string)
+          gateway = optional(string)
+        }))
+      }))
+      user_account = optional(object({
+        keys     = optional(list(string))
+        password = optional(string)
+      }))
+    }))
+    memory = optional(object({
+      dedicated = optional(number, 512)
+      swap      = optional(number, 0)
+    }))
+    network_interface = optional(map(object({
+      bridge  = optional(string, "vmbr0")
+      name    = string
+      vlan_id = optional(number)
+    })))
+    operating_system = object({
+      template_file_id = string
+    })
+    pool_id = optional(string)
+    started = optional(bool, true)
+    startup = optional(object({
+      order = number
+    }))
+    start_on_boot = optional(bool, true)
+    unprivileged  = optional(bool, false)
   }))
 }
