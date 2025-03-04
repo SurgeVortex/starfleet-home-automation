@@ -186,7 +186,7 @@ resource "proxmox_virtual_environment_container" "containers" {
   }
 
   operating_system {
-    template_file_id = each.value.operating_system.template_file_id
+    template_file_id = each.value.is_cloud_init ? proxmox_virtual_environment_download_file.cloud_images[each.value.operating_system.template_file_id].id : each.value.operating_system.template_file_id
   }
 
   pool_id       = each.value.pool_id
