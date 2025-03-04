@@ -142,14 +142,15 @@ variable "proxmox_containers" {
         password = optional(string)
       }))
     }))
+    is_cloud_init = optional(bool, false)
     memory = optional(object({
       dedicated = optional(number, 512)
       swap      = optional(number, 0)
     }))
     network_interface = optional(map(object({
       bridge  = optional(string, "vmbr0")
-      name    = string
-      vlan_id = optional(number)
+      name    = optional(string, "eth0")
+      vlan_id = optional(number, "40")
     })))
     operating_system = object({
       template_file_id = string
