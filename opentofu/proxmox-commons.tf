@@ -177,7 +177,7 @@ resource "proxmox_virtual_environment_container" "containers" {
   }
 
   dynamic "network_interface" {
-    for_each = each.value.network_interface ? each.value.network_interface : []
+    for_each = try(each.value.network_interface, [])
     content {
       bridge  = try(network_interface.value.bridge, "vmbr0")
       name    = network_interface.value.name
