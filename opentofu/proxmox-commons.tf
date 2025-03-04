@@ -200,6 +200,7 @@ resource "proxmox_virtual_environment_container" "containers" {
       order = startup.value.order
     }
   }
+  depends_on = [proxmox_virtual_environment_download_file.cloud_images]
 }
 
 resource "null_resource" "setup_bastion" {
