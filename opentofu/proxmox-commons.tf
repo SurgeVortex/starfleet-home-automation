@@ -164,8 +164,8 @@ resource "proxmox_virtual_environment_container" "containers" {
       dynamic "user_account" {
         for_each = each.value.is_cloud_init ? ["cloud_init"] : each.value.initialization.user_account != null ? ["user_account"] : []
         content {
-          keys     = try(each.value.initialization.user_account.keys, [])
-          password = try(each.value.initialization.user_account.password, null)
+          keys     = each.value.is_cloud_init ? [local.ssh_credentials_secrets.ssh-public-key] : each.value.initialization.user_account.keys
+          password = each.value.is_cloud_init ? data.bitwarden_item_login.ssh_credentials.password : each.value.initialization.user_account.password
         }
       }
     }
