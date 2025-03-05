@@ -154,6 +154,7 @@ variable "proxmox_containers" {
     })))
     operating_system = object({
       template_file_id = string
+      type             = optional(string, "unmanaged")
     })
     pool_id = optional(string)
     started = optional(bool, true)

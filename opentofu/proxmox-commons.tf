@@ -187,6 +187,7 @@ resource "proxmox_virtual_environment_container" "containers" {
 
   operating_system {
     template_file_id = each.value.is_cloud_init ? proxmox_virtual_environment_download_file.cloud_images[each.value.operating_system.template_file_id].id : each.value.operating_system.template_file_id
+    type             = try(each.value.operating_system.type, "unmanaged")
   }
 
   pool_id       = each.value.pool_id
@@ -199,6 +200,9 @@ resource "proxmox_virtual_environment_container" "containers" {
     content {
       order = startup.value.order
     }
+  }
+  features {
+    nesting = true
   }
   depends_on = [proxmox_virtual_environment_download_file.cloud_images]
 }
