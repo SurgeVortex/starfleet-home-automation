@@ -291,7 +291,7 @@ resource "null_resource" "setup_haproxy" {
   provisioner "file" {
     content = templatefile("templates/keepalived.conf.tmpl", {
       keepalived_priority  = try(each.value.priority, 100),
-      keepalived_auth_pass = random_string.keepalived_auth_pass,
+      keepalived_auth_pass = random_string.keepalived_auth_pass.result,
       vip                  = var.haproxy_vip,
     })
     destination = "/etc/keepalived/keepalived.conf"
