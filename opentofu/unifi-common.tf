@@ -136,10 +136,10 @@ resource "unifi_user" "servers" {
 
 resource "unifi_user" "containers" {
   for_each        = var.proxmox_containers
-  mac             = lower(proxmox_virtual_environment_container.containers[each.key].network_device[0].mac_address)
-  name            = each.value.name
+  mac             = lower(each.value.network_device[0].mac_address)
+  name            = each.value.hostname
   note            = each.value.description != null ? each.value.description : "Container Hosted on Proxmox"
-  fixed_ip        = try(split("/", proxmox_virtual_environment_container.containers[each.key].ip_config[0].ipv4[0].address)[0], null)
+  fixed_ip        = try(split("/", each.value.ip_config[0].ipv4[0].address)[0], null)
   dev_id_override = try(each.value.device_id, 0)
   network_id      = unifi_network.vlans["servers"].id
   user_group_id   = unifi_user_group.user_groups["servers"].id
