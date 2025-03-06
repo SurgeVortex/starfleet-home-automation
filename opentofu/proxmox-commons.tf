@@ -260,7 +260,7 @@ resource "null_resource" "setup_haproxy" {
 
   provisioner "remote-exec" {
     inline = [
-      "apt update && apt install -y haproxy keepalived socat libapache2-modsecurity curl jq",
+      "apt update && apt install -y haproxy keepalived socat libapache2-mod-security2 curl jq",
       "curl https://get.acme.sh | sh",
       "source ~/.bashrc",
       "mkdir -p /etc/haproxy/certs",
