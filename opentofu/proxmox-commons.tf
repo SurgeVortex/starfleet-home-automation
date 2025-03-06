@@ -253,14 +253,23 @@ resource "null_resource" "setup_haproxy" {
   connection {
     type        = "ssh"
     host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
-    user        = data.bitwarden_item_login.ssh_credentials.username
+    user        = "root"
     private_key = data.bitwarden_item_login.ssh_credentials.notes
 
   }
 
   provisioner "remote-exec" {
     inline = [
-      "apt update && apt install -y haproxy keepalived",
+      "apt update && apt install -y haproxy keepalived socat libapache2-modsecurity curl jq",
+      "curl https://get.acme.sh | sh",
+      "source ~/.bashrc",
+      "mkdir -p /etc/haproxy/certs",
+      "chmod 700 /etc/haproxy/certs",
+      "acme.sh --issue --standalone -d ${var.haproxy_domain} --server letsencrypt",
+      "acme.sh --install-cert -d yourdomain.com --key-file /etc/haproxy/certs/privkey.pem --fullchain-file /etc/haproxy/certs/fullchain.pem --reloadcmd 'systemctl restart haproxy'",
+      "mv /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
+      "echo \"SecRuleEngine On\" >> /etc/modsecurity/modsecurity.conf",
+      "curl https://www.cloudflare.com/ips-v4 -o /etc/haproxy/cloudflare_ips"
     ]
   }
 
