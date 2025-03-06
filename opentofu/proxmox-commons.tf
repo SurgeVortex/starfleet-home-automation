@@ -265,11 +265,6 @@ resource "null_resource" "setup_haproxy" {
       "source ~/.bashrc",
       "mkdir -p /etc/haproxy/certs",
       "chmod 700 /etc/haproxy/certs",
-      "acme.sh --issue --standalone -d ${var.haproxy_domain} --server letsencrypt",
-      "acme.sh --install-cert -d yourdomain.com --key-file /etc/haproxy/certs/privkey.pem --fullchain-file /etc/haproxy/certs/fullchain.pem --reloadcmd 'systemctl restart haproxy'",
-      "mv /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
-      "echo \"SecRuleEngine On\" >> /etc/modsecurity/modsecurity.conf",
-      "curl https://www.cloudflare.com/ips-v4 -o /etc/haproxy/cloudflare_ips"
     ]
   }
 
@@ -308,6 +303,16 @@ resource "null_resource" "setup_haproxy" {
       "systemctl enable --now keepalived",
       "systemctl restart haproxy",
       "systemctl restart keepalived"
+    ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "acme.sh --issue --standalone -d ${var.haproxy_domain} --server letsencrypt",
+      "acme.sh --install-cert -d yourdomain.com --key-file /etc/haproxy/certs/privkey.pem --fullchain-file /etc/haproxy/certs/fullchain.pem --reloadcmd 'systemctl restart haproxy'",
+      "mv /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
+      "echo \"SecRuleEngine On\" >> /etc/modsecurity/modsecurity.conf",
+      "curl https://www.cloudflare.com/ips-v4 -o /etc/haproxy/cloudflare_ips"
     ]
   }
 
