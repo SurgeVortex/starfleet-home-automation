@@ -135,7 +135,7 @@ resource "unifi_user" "servers" {
 }
 
 resource "unifi_user" "containers" {
-  for_each        = var.proxmox_vms
+  for_each        = var.proxmox_containers
   mac             = lower(proxmox_virtual_environment_container.containers[each.key].network_device[0].mac_address)
   name            = each.value.name
   note            = each.value.description != null ? each.value.description : "Container Hosted on Proxmox"
