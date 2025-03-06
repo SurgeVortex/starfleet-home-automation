@@ -134,6 +134,35 @@ resource "unifi_user" "servers" {
   user_group_id   = unifi_user_group.user_groups["servers"].id
 }
 
+resource "unifi_user" "containers" {
+  for_each        = var.proxmox_vms
+  mac             = lower(proxmox_virtual_environment_container.containers[each.key].network_device[0].mac_address)
+  name            = each.value.name
+  note            = each.value.description != null ? each.value.description : "Container Hosted on Proxmox"
+  fixed_ip        = try(split("/", proxmox_virtual_environment_container.containers[each.key].ip_config[0].ipv4[0].address)[0], null)
+  dev_id_override = try(each.value.device_id, 0)
+  network_id      = unifi_network.vlans["servers"].id
+  user_group_id   = unifi_user_group.user_groups["servers"].id
+}
+
+resource "unifi_port_forward" "http_port_forward" {
+  for_each = try(proxmox_virtual_environment_container.containers["haproxy-1"] != null ? { haproxy-1 : "haproxy-1" } : {}, {})
+  dst_port = 80
+  fwd_port = 80
+  fwd_ip   = split("/", proxmox_virtual_environment_container.containers["haproxy-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+  name     = "isonet.casa HTTP Port Forward"
+  protocol = "tcp_udp"
+}
+
+resource "unifi_port_forward" "https_port_forward" {
+  for_each = try(proxmox_virtual_environment_container.containers["haproxy-1"] != null ? { haproxy-1 : "haproxy-1" } : {}, {})
+  dst_port = 443
+  fwd_port = 443
+  fwd_ip   = split("/", proxmox_virtual_environment_container.containers["haproxy-1"].initialization[0].ip_config[0].ipv4[0].address)[0]
+  name     = "isonet.casa HTTPS Port Forward"
+  protocol = "tcp_udp"
+}
+
 data "unifi_ap_group" "default" {
 }
 

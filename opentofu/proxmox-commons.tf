@@ -243,4 +243,63 @@ resource "null_resource" "setup_bastion" {
   }
 }
 
+resource "random_string" "keepalived_auth_pass" {
+  length  = 16
+  special = false
+}
 
+resource "null_resource" "setup_haproxy" {
+  for_each = { for k, v in proxmox_virtual_environment_container.containers : k => v if startswith(k, "haproxy") }
+  connection {
+    type        = "ssh"
+    host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
+    user        = data.bitwarden_item_login.ssh_credentials.username
+    private_key = data.bitwarden_item_login.ssh_credentials.notes
+
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "apt update && apt install -y haproxy keepalived",
+    ]
+  }
+
+  provisioner "file" {
+    content = templatefile("templates/haproxy.cfg.tmpl", {
+      worker_backends = [
+        for k, v in proxmox_virtual_environment_vm.virtual_machines :
+        {
+          name = k, ip = split("/", v.initialization[0].ip_config[0].ipv4[0].address)[0]
+        } if startswith(k, "k8s-worker")
+      ],
+      master_backends = [
+        for k, v in proxmox_virtual_environment_vm.virtual_machines :
+        {
+          name = k, ip = split("/", v.initialization[0].ip_config[0].ipv4[0].address)[0]
+        } if startswith(k, "k8s-master")
+      ],
+      vip         = var.haproxy_vip,
+      domain_name = var.haproxy_domain
+    })
+    destination = "/etc/haproxy/haproxy.cfg"
+  }
+
+  provisioner "file" {
+    content = templatefile("templates/keepalived.conf.tmpl", {
+      keepalived_priority  = each.value.priority,
+      keepalived_auth_pass = random_string.keepalived_auth_pass,
+      vip                  = var.haproxy_vip,
+    })
+    destination = "/etc/keepalived/keepalived.conf"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "systemctl enable --now haproxy",
+      "systemctl enable --now keepalived",
+      "systemctl restart haproxy",
+      "systemctl restart keepalived"
+    ]
+  }
+
+}

@@ -1,0 +1,59 @@
+global
+    log stdout format raw local0
+    maxconn 4096
+    chroot /var/lib/haproxy
+    user haproxy
+    group haproxy
+    ssl-default-bind-options no-sslv3 no-tlsv10 no-tlsv11
+    ssl-default-bind-ciphers EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+    tune.ssl.default-dh-param 2048
+
+defaults
+    log global
+    mode http
+    timeout connect 5s
+    timeout client 50s
+    timeout server 50s
+
+frontend http_front
+    bind ${vip}:80
+    redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_front
+    bind ${vip}:443 ssl crt /etc/haproxy/certs/fullchain.pem
+    option httplog
+    http-response set-header Strict-Transport-Security max-age=31536000;\ includeSubDomains;\ preload
+    http-response set-header X-Content-Type-Options nosniff
+    http-response set-header X-Frame-Options DENY
+    http-response set-header X-XSS-Protection 1;\ mode=block
+    http-response set-header Content-Security-Policy "default-src 'self';"
+
+    acl from_cloudflare src -f /etc/haproxy/cloudflare_ips
+    acl from_lan src 192.168.0.0/16 10.0.0.0/8
+
+    tcp-request connection reject if !from_cloudflare !from_lan
+
+    use_backend web_servers if { hdr(host) -i ${domain_name} }
+
+frontend k8s_controlplane
+    bind ${vip}:6443
+    mode tcp
+    option tcplog
+    default_backend k8s_controlplane_backends
+
+backend k8s_controlplane_backends
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    default-server inter 10s fall 3 rise 2
+%{ for backend in master_backends ~}
+    server ${backend.name} ${backend.ip}:443 check
+%{ endfor ~}
+
+backend k8s_worker_backends
+    balance roundrobin
+    option tcp-check
+    default-server inter 10s fall 3 rise 2
+%{ for backend in worker_backends ~}
+    server ${backend.name} ${backend.ip}:443 check
+%{ endfor ~}

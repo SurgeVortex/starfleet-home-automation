@@ -16,6 +16,17 @@ variable "bitwarden_api_credentials_name" {
   default     = "Bitwarden API Credentials"
 }
 
+variable "haproxy_vip" {
+  description = "The VIP for the HAProxy load balancer."
+  type        = string
+  default     = ""
+}
+variable "haproxy_domain" {
+  description = "The domain for the HAProxy load balancer."
+  type        = string
+  default     = ""
+}
+
 variable "proxmox_cloud_images" {
   description = "Cloud images to download."
   type = map(object({
@@ -156,8 +167,9 @@ variable "proxmox_containers" {
       template_file_id = string
       type             = optional(string, "unmanaged")
     })
-    pool_id = optional(string)
-    started = optional(bool, true)
+    pool_id  = optional(string)
+    priority = optional(number, 100)
+    started  = optional(bool, true)
     startup = optional(object({
       order = number
     }))
