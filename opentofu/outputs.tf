@@ -38,3 +38,8 @@ output "Proxmox_VMs" {
   value     = proxmox_virtual_environment_vm.virtual_machines
   sensitive = true
 }
+
+output "Proxmox_Contaienrss" {
+  value     = proxmox_virtual_environment_container.containers
+  sensitive = true
+}
