@@ -261,10 +261,30 @@ resource "null_resource" "setup_haproxy" {
   provisioner "remote-exec" {
     inline = [
       "apt update && apt install -y haproxy keepalived socat libapache2-mod-security2 curl jq",
-      "curl https://get.acme.sh | sh",
-      "source ~/.bashrc",
-      "mkdir -p /etc/haproxy/certs",
-      "chmod 700 /etc/haproxy/certs",
+    ]
+  }
+
+  provisioner "file" {
+    content = templatefile("templates/keepalived.conf.tmpl", {
+      keepalived_priority  = try(each.value.priority, 100),
+      keepalived_auth_pass = random_string.keepalived_auth_pass.result,
+      vip                  = var.haproxy_vip,
+    })
+    destination = "/etc/keepalived/keepalived.conf"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/scripts/acme_setup.sh"
+    destination = "/tmp/acme_setup.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "systemctl enable --now keepalived",
+      "systemctl restart keepalived",
+      "sleep 5",
+      "chmod +x /tmp/acme_setup.sh",
+      "/tmp/acme_setup.sh ${var.haproxy_domain} ${var.cloudflare_api_token}"
     ]
   }
 
@@ -288,31 +308,10 @@ resource "null_resource" "setup_haproxy" {
     destination = "/etc/haproxy/haproxy.cfg"
   }
 
-  provisioner "file" {
-    content = templatefile("templates/keepalived.conf.tmpl", {
-      keepalived_priority  = try(each.value.priority, 100),
-      keepalived_auth_pass = random_string.keepalived_auth_pass.result,
-      vip                  = var.haproxy_vip,
-    })
-    destination = "/etc/keepalived/keepalived.conf"
-  }
-
   provisioner "remote-exec" {
     inline = [
       "systemctl enable --now haproxy",
-      "systemctl enable --now keepalived",
       "systemctl restart haproxy",
-      "systemctl restart keepalived"
-    ]
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "acme.sh --issue --standalone -d ${var.haproxy_domain} --server letsencrypt",
-      "acme.sh --install-cert -d yourdomain.com --key-file /etc/haproxy/certs/privkey.pem --fullchain-file /etc/haproxy/certs/fullchain.pem --reloadcmd 'systemctl restart haproxy'",
-      "mv /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
-      "echo \"SecRuleEngine On\" >> /etc/modsecurity/modsecurity.conf",
-      "curl https://www.cloudflare.com/ips-v4 -o /etc/haproxy/cloudflare_ips"
     ]
   }
 

@@ -27,6 +27,13 @@ variable "haproxy_domain" {
   default     = ""
 }
 
+variable "cloudflare_api_token" {
+  description = "API Token for Cloudflare."
+  type        = string
+  default     = ""
+
+}
+
 variable "proxmox_cloud_images" {
   description = "Cloud images to download."
   type = map(object({
