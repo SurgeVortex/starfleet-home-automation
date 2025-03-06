@@ -255,7 +255,10 @@ resource "null_resource" "setup_haproxy" {
     host        = split("/", each.value.initialization[0].ip_config[0].ipv4[0].address)[0]
     user        = "root"
     private_key = data.bitwarden_item_login.ssh_credentials.notes
+  }
 
+  triggers = {
+    always = timestamp()
   }
 
   provisioner "remote-exec" {
