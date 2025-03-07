@@ -33,7 +33,7 @@ frontend https_front
 
     tcp-request connection reject if !from_cloudflare !from_lan
 
-    use_backend web_servers if { hdr(host) -i ${domain_name} }
+    use_backend k8s_worker_backends if { hdr(host) -i ${domain_name} }
 
 frontend k8s_controlplane
     bind ${vip}:6443
