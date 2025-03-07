@@ -258,7 +258,31 @@ resource "null_resource" "setup_haproxy" {
   }
 
   triggers = {
-    always = timestamp()
+    script_checksum = md5(file("${path.module}/scripts/acme_setup.sh"))
+    haproxy_cfg_checksum = md5(templatefile("templates/haproxy.cfg.tmpl", {
+      worker_backends = [
+        for k, v in proxmox_virtual_environment_vm.virtual_machines :
+        {
+          name = k, ip = split("/", v.initialization[0].ip_config[0].ipv4[0].address)[0]
+        } if startswith(k, "k8s-worker")
+      ],
+      master_backends = [
+        for k, v in proxmox_virtual_environment_vm.virtual_machines :
+        {
+          name = k, ip = split("/", v.initialization[0].ip_config[0].ipv4[0].address)[0]
+        } if startswith(k, "k8s-master")
+      ],
+      vip         = var.haproxy_vip,
+      domain_name = var.haproxy_domain
+    }))
+    keepalived_cfg_checksum = md5(templatefile("templates/keepalived.conf.tmpl", {
+      keepalived_priority  = try(each.value.priority, 100),
+      keepalived_auth_pass = random_string.keepalived_auth_pass.result,
+      vip                  = var.haproxy_vip,
+    }))
+    haproxy_vip          = var.haproxy_vip
+    haproxy_domain       = var.haproxy_domain
+    cloudflare_api_token = var.cloudflare_api_token
   }
 
   provisioner "remote-exec" {
