@@ -20,7 +20,7 @@ frontend http_front
     redirect scheme https code 301 if !{ ssl_fc }
 
 frontend https_front
-    bind ${vip}:443 ssl crt /etc/haproxy/certs/fullchain.pem
+    bind ${vip}:443 ssl crt /etc/haproxy/certs/${domain_name}.pem
     option httplog
     http-response set-header Strict-Transport-Security max-age=31536000;\ includeSubDomains;\ preload
     http-response set-header X-Content-Type-Options nosniff
