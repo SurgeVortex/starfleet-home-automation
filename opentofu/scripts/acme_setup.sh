@@ -5,7 +5,7 @@ DOMAIN="$1"
 WILDCARD_DOMAIN="*.$1"
 CF_API_TOKEN="$2"  # Replace with your actual API Token
 CERT_DIR="/etc/haproxy/certs"
-HAPROXY_RELOAD_CMD="systemctl reload haproxy"
+HAPROXY_RELOAD_CMD="cat $CERT_DIR/$DOMAIN.key $CERT_DIR/$DOMAIN.pem > $CERT_DIR/$DOMAIN.pem.key && systemctl reload haproxy"
 
 # Ensure dependencies are installed
 apt update && apt install -y curl socat cron
