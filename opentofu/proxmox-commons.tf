@@ -337,6 +337,9 @@ resource "null_resource" "setup_haproxy" {
 
   provisioner "remote-exec" {
     inline = [
+      "mv /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
+      "echo \"SecRuleEngine On\" >> /etc/modsecurity/modsecurity.conf",
+      "curl https://www.cloudflare.com/ips-v4 -o /etc/haproxy/cloudflare_ips",
       "systemctl enable --now haproxy",
       "systemctl restart haproxy",
     ]
