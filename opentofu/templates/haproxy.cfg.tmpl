@@ -47,7 +47,7 @@ backend k8s_controlplane_backends
     option tcp-check
     default-server inter 10s fall 3 rise 2
 %{ for backend in master_backends ~}
-    server ${backend.name} ${backend.ip}:443 check
+    server ${backend.name} ${backend.ip}:6443 check
 %{ endfor ~}
 
 backend k8s_worker_backends
